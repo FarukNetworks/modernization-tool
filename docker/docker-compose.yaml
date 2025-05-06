@@ -1,0 +1,21 @@
+services:
+  mssql-docker:
+    build:
+      context: ./mssql-docker
+    env_file:
+      - ./mssql-docker/.env
+    platform: linux/amd64  # Enable this line to build for AMD64 architecture
+    ports:
+      - "1433:1433"
+    networks:
+      - app-network
+    volumes:
+      - mssql_data:/var/opt/mssql
+      - ../output:/var/opt/shared
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mssql_data:
