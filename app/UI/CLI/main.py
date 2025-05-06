@@ -179,7 +179,7 @@ def prompt_for_next_action(project_path, connection_string, project_name):
         # After scaffolding, ask again what to do next
         prompt_for_next_action(project_path, connection_string, project_name)
     elif selected == "Discover Dependencies":
-        discover_dependencies(connection_string)
+        discover_dependencies(connection_string, project_name)
         # After discovery, ask again what to do next
         prompt_for_next_action(project_path, connection_string, project_name)
     elif selected == "Exit":

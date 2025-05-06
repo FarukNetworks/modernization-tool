@@ -428,7 +428,7 @@ ORDER BY s.name, p.name;
 procedures = cursor.fetchall()
 
 
-def discover_dependencies(connection_string):
+def discover_dependencies(connection_string, project_name):
 
     connection = pyodbc.connect(connection_string)
     cursor = connection.cursor()
@@ -607,12 +607,12 @@ def discover_dependencies(connection_string):
     collect_object_create_scripts()
 
     # Save procedures to JSON file
-    os.makedirs("output/data", exist_ok=True)
-    with open("output/data/procedure_dependencies.json", "w") as f:
+    os.makedirs(f"app/output/{project_name}/data", exist_ok=True)
+    with open(f"app/output/{project_name}/data/procedure_dependencies.json", "w") as f:
         json.dump(procedure_dependencies, f, indent=4)
 
     # Save object create scripts to JSON file
-    with open("output/data/object_create_scripts.json", "w") as f:
+    with open(f"app/output/{project_name}/data/object_create_scripts.json", "w") as f:
         json.dump(object_create_scripts, f, indent=4)
 
     print("Procedure discovery completed.")
