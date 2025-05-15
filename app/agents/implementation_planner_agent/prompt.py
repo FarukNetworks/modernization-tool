@@ -355,7 +355,7 @@ def get_prompt(schema_name, procedure_name, procedure_definition, project_path):
 """
 
     out_of_scope_template = f"""
-FILE: {procedure_name_only}_out_of_scope.json
+FILE: {procedure_name}_out_of_scope.json
    ```json
 {{
   "outOfScope": {{
@@ -391,7 +391,7 @@ FILE: {procedure_name_only}_out_of_scope.json
     """
 
     specific_considerations_template = f"""
-    FILE: {procedure_name_only}_specific_considerations.json
+    FILE: {procedure_name}_specific_considerations.json
    ```json
 {{
   "specificConsiderations": {{
