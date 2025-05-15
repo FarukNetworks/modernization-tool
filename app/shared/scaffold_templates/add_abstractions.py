@@ -9,25 +9,25 @@ def add_abstractions(project_name):
     and modify Program.cs to add necessary using statements and service registrations.
     """
     # Get the script directory and calculate paths
-    script_dir = Path(os.path.dirname(os.path.abspath(__file__)))
-    root_dir = "app"
-    abstractions_dir = "app" / "shared" / "scaffold_templates" / "Abstractions"
-    output_dir = "app" / "output" / project_name / "csharp-code"
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    root_dir = os.path.dirname(os.path.dirname(os.path.dirname(script_dir)))
+    abstractions_dir = os.path.join(script_dir, "Abstractions")
+    output_dir = os.path.join(root_dir, "app", "output", project_name, "csharp-code")
 
     print(f"Adding abstractions from: {abstractions_dir}")
     print(f"To project in: {output_dir}")
 
     try:
         # Copy Abstractions directory
-        dest_abstractions = output_dir / "Abstractions"
-        if dest_abstractions.exists():
+        dest_abstractions = os.path.join(output_dir, "Abstractions")
+        if os.path.exists(dest_abstractions):
             shutil.rmtree(dest_abstractions)
         shutil.copytree(abstractions_dir, dest_abstractions)
         print("Abstractions copied successfully!")
 
         # Modify Program.cs
-        program_cs_path = output_dir / "Program.cs"
-        if not program_cs_path.exists():
+        program_cs_path = os.path.join(output_dir, "Program.cs")
+        if not os.path.exists(program_cs_path):
             print("Error: Program.cs not found!")
             return False
 
@@ -76,4 +76,7 @@ builder.Services.AddRepositoryServices();
 
     except Exception as e:
         print(f"Error adding abstractions: {e}")
+        import traceback
+
+        traceback.print_exc()  # Add stack trace for better debugging
         return False

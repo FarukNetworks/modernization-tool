@@ -179,174 +179,84 @@ def scaffold_database(folder_path, project_name):
             os.makedirs(directory)
             print(f"Created directory: {directory}")
 
-    # There are two approaches:
-    # 1. Use a temporary C# file to do the scaffolding
-    # 2. Use the dotnet ef command directly
-
-    # Option 1: Create and execute a C# file
-    # This approach is more flexible and easier to customize
-    scaffold_code = f"""using System;
-using System.Collections.Generic;
-using System.IO;
-using Microsoft.EntityFrameworkCore.Design;
-using Microsoft.EntityFrameworkCore.Scaffolding;
-using Microsoft.Extensions.DependencyInjection;
-
-namespace DatabaseScaffolder
-{{
-    public class Program
-    {{
-        public static void Main(string[] args)
-        {{
-            Console.WriteLine("Starting database scaffolding...");
-            
-            // Connection string and configuration
-            string connectionString = "{connection_string}";
-            string provider = "Microsoft.EntityFrameworkCore.SqlServer";
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Model");
-            string contextDir = Path.Combine(Directory.GetCurrentDirectory(), "Data");
-            string contextName = "{context_name}";
-            string schema = "{schema}";
-            
-            // Create directories if they don't exist
-            Directory.CreateDirectory(outputDir);
-            Directory.CreateDirectory(contextDir);
-            
-            // Set up services for scaffolding
-            var serviceProvider = new ServiceCollection()
-                .AddEntityFrameworkDesignTime()
-                .BuildServiceProvider();
-            
-            var scaffolder = serviceProvider.GetRequiredService<IReverseEngineerScaffolder>();
-            
-            // Configure scaffolding options
-            var options = new ReverseEngineerOptions
-            {{
-                ConnectionString = connectionString,
-                ContextName = contextName,
-                OutputPath = Directory.GetCurrentDirectory(),
-                ProjectPath = Directory.GetCurrentDirectory(),
-                ContextNamespace = "{context_namespace}",
-                ModelNamespace = "{context_namespace.replace('.Data', '.Model')}",
-                ContextDir = "Data",
-                UseDataAnnotations = true
-            }};
-            
-            // Define tables to include (from the specified schema)
-            var tableSelectionSet = new TableSelectionSet
-            {{
-                Schemas = new List<string> {{ schema }}
-            }};
-            
-            try
-            {{
-                // Perform the scaffolding
-                var result = scaffolder.ScaffoldModel(
-                    connectionString,
-                    tableSelectionSet,
-                    options
-                );
-                
-                Console.WriteLine($"Successfully scaffolded database to {{outputDir}} with context in {{contextDir}}");
-            }}
-            catch (Exception ex)
-            {{
-                Console.WriteLine($"Error during scaffolding: {{ex.Message}}");
-                Console.WriteLine(ex.StackTrace);
-            }}
-        }}
-    }}
-}}
-"""
-
-    # Option 2: Direct dotnet ef command
-    # This is simpler but less flexible
-    dotnet_ef_command = f'dotnet ef dbcontext scaffold "Name=DefaultConnection" Microsoft.EntityFrameworkCore.SqlServer -o Models --data-annotations -c {context_name} --context-dir Data --context-namespace {context_namespace} --namespace {context_namespace.replace(".Data", ".Models")}'
-
-    # Choose which approach to use
-    use_dotnet_ef = True  # Set to False to use the C# file approach
-
+    # Start the scaffolding process
     print(f"Starting database scaffolding for {project_dir}...")
 
+    # Save current directory to restore later
+    original_dir = os.getcwd()
+    print(f"Current directory before: {original_dir}")
+    print(f"Project directory exists: {os.path.exists(project_dir)}")
+    print(
+        f"Program.cs exists: {os.path.exists(os.path.join(project_dir, 'Program.cs'))}"
+    )
+
     try:
-        # Print current directory and verify project dir exists
-        print(f"Current directory before: {os.getcwd()}")
-        print(f"Project directory exists: {os.path.exists(project_dir)}")
-        print(
-            f"Program.cs exists: {os.path.exists(os.path.join(project_dir, 'Program.cs'))}"
-        )
-
-        # Change directory to the project
-        current_dir = os.getcwd()
+        # Change to the project directory for the dotnet ef command
         os.chdir(project_dir)
-
         print(f"Current directory after: {os.getcwd()}")
         print(f"Program.cs exists in current directory: {os.path.exists('Program.cs')}")
         print(f"Files in current directory: {os.listdir('.')}")
 
-        if use_dotnet_ef:
-            # Approach 2: Use dotnet ef command directly
-            print("Using dotnet ef command for scaffolding...")
-            print(f"Executing: {dotnet_ef_command}")
+        # Option 2: Use the dotnet ef command directly
+        # This approach is simpler and more reliable
+        print("Using dotnet ef command for scaffolding...")
+        scaffold_command = 'dotnet ef dbcontext scaffold "Name=DefaultConnection" Microsoft.EntityFrameworkCore.SqlServer -o Models --data-annotations -c AppDbContext --context-dir Data --context-namespace sql2code.Data --namespace sql2code.Models'
+        print(f"Executing: {scaffold_command}")
 
-            process = subprocess.run(
-                dotnet_ef_command, shell=True, text=True, capture_output=True
-            )
+        # Execute the command
+        result = subprocess.run(
+            scaffold_command, shell=True, capture_output=True, text=True
+        )
 
-            if process.returncode == 0:
-                print("Scaffolding completed successfully!")
-                print(process.stdout)
-            else:
-                print(f"Error executing scaffolding command: {process.stderr}")
-                print("\nTrying alternative approach...")
-                use_dotnet_ef = False  # Fall back to C# file approach
+        if result.returncode != 0:
+            print(f"Error executing scaffolding command: {result.stderr}")
+            return False
 
-        if not use_dotnet_ef:
-            # Approach 1: Create and run C# file
-            print("Using C# file for scaffolding...")
+        # Print the output
+        print("Scaffolding completed successfully!")
+        if result.stdout:
+            print(result.stdout)
 
-            if process.returncode == 0:
-                print("Scaffolding completed successfully!")
-                print(process.stdout)
-            else:
-                print(f"Error during scaffolding: {process.stderr}")
-                os.chdir(current_dir)  # Make sure we return to original directory
-                return False
+        # Update Program.cs to include DbContext configuration
+        update_program_cs(project_dir, context_namespace, context_name)
 
-        # Update Program.cs to include the DbContext configuration
-        update_result = update_program_cs(project_dir, context_namespace, context_name)
-        if not update_result:
-            print("Failed to update Program.cs")
+        # Update model files with namespace imports
+        update_model_files("./Models", model_namespace)
 
-        # Update model files to include the model namespace
-        update_model_files(os.path.join(".", "Models"), model_namespace)
+        # Update DbContext with explicit model namespace paths
+        update_dbcontext_paths("./Data/AppDbContext.cs", model_namespace)
 
-        # Update AppDbContext.cs to use explicit namespace paths
-        dbcontext_path = os.path.join(".", "Data", "AppDbContext.cs")
-        update_dbcontext_paths(dbcontext_path, model_namespace)
-
-        # Return to original directory
-        os.chdir(current_dir)
-
-        # Add abstractions after scaffolding is complete
+        # Add abstractions to the project
         print("\nAdding abstractions to the project...")
-        if not add_abstractions(project_name):
-            print("Failed to add abstractions")
-            return False
-        print("✅ Abstractions added successfully!")
+        try:
+            add_abstractions(project_name)
+        except Exception as e:
+            print(f"Error during scaffolding: {str(e)}")
+            import traceback
 
-        # Generate repositories and unit of work for each model
-        print("\nGenerating repositories and unit of work...")
-        if not generate_repositories(project_name):
-            print("Failed to generate repositories")
+            traceback.print_exc()
             return False
-        print("✅ Repositories and unit of work generated successfully!")
+
+        # Generate repositories
+        print("\nGenerating repositories for each model...")
+        try:
+            generate_repositories(project_name)
+        except Exception as e:
+            print(f"Error generating repositories: {str(e)}")
+            import traceback
+
+            traceback.print_exc()
+            return False
 
         return True
 
     except Exception as e:
         print(f"Error during scaffolding: {str(e)}")
-        # Ensure we return to the original directory
-        if os.getcwd() != current_dir:
-            os.chdir(current_dir)
+        import traceback
+
+        traceback.print_exc()
         return False
+
+    finally:
+        # Restore original directory
+        os.chdir(original_dir)

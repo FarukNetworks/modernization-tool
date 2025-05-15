@@ -16,6 +16,10 @@ sys.path.append(
 from shared.get_stored_procedures import extract_stored_procedures
 from shared.scaffold_database import scaffold_database
 from shared.discover_dependencies import discover_dependencies
+from shared.scaffold_templates.create_ef_analysis import (
+    analyze_csharp_dependencies,
+    run_csharp_dependency_analysis,
+)
 
 # Add the root directory to handle imports for the business analysis agent
 root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -25,6 +29,10 @@ if root_dir not in sys.path:
 from agents.business_analysis_agent.main import (
     run_business_analysis,
     business_analysis,
+)
+from agents.implementation_planner_agent.main import (
+    implementation_planner,
+    run_implementation_planner,
 )
 
 
@@ -225,6 +233,74 @@ def prompt_for_next_action(project_path, connection_string, project_name):
             print("No procedures found. Please run 'Prepare Stored Procedures' first.")
 
         # After analysis, ask again what to do next
+        prompt_for_next_action(project_path, connection_string, project_name)
+    elif selected == "Csharp Dependency Analysis":
+        # Get list of procedures for C# dependency analysis
+        procedures = [
+            folder
+            for folder in os.listdir(os.path.join(project_path, "sql_raw"))
+            if os.path.isdir(os.path.join(project_path, "sql_raw", folder))
+        ]
+
+        # Ask if user wants to run full menu or analyze a specific procedure
+        if procedures:
+            choices = ["Show full menu"] + procedures + ["Return to main menu"]
+            questions = [
+                inquirer.List(
+                    "csharp_analysis_choice",
+                    message="Which procedure would you like to analyze?",
+                    choices=choices,
+                ),
+            ]
+            csharp_analysis_answer = inquirer.prompt(questions)
+            selected_csharp_analysis = csharp_analysis_answer["csharp_analysis_choice"]
+
+            if selected_csharp_analysis == "Show full menu":
+                # Run C# dependency analysis using the full menu
+                run_csharp_dependency_analysis(project_path)
+            elif selected_csharp_analysis == "Return to main menu":
+                pass
+            else:
+                # Analyze the selected procedure directly
+                analyze_csharp_dependencies(selected_csharp_analysis, project_path)
+        else:
+            print("No procedures found. Please run 'Prepare Stored Procedures' first.")
+
+        # After analysis, ask again what to do next
+        prompt_for_next_action(project_path, connection_string, project_name)
+    elif selected == "Implementation Planner":
+        # Get list of procedures to plan implementation for
+        procedures = [
+            folder
+            for folder in os.listdir(os.path.join(project_path, "sql_raw"))
+            if os.path.isdir(os.path.join(project_path, "sql_raw", folder))
+        ]
+
+        # Ask if user wants to run full menu or plan a specific procedure
+        if procedures:
+            choices = ["Show full menu"] + procedures + ["Return to main menu"]
+            questions = [
+                inquirer.List(
+                    "planner_choice",
+                    message="What would you like to plan implementation for?",
+                    choices=choices,
+                ),
+            ]
+            planner_answer = inquirer.prompt(questions)
+            selected_procedure = planner_answer["planner_choice"]
+
+            if selected_procedure == "Show full menu":
+                # Run implementation planner using the full menu
+                run_implementation_planner(project_path)
+            elif selected_procedure == "Return to main menu":
+                pass
+            else:
+                # Plan implementation for the selected procedure directly
+                implementation_planner(selected_procedure, project_path)
+        else:
+            print("No procedures found. Please run 'Prepare Stored Procedures' first.")
+
+        # After planning, ask again what to do next
         prompt_for_next_action(project_path, connection_string, project_name)
     elif selected == "Exit":
         print("Exiting. Goodbye!")

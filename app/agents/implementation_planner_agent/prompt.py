@@ -101,7 +101,7 @@ def get_prompt(schema_name, procedure_name, procedure_definition, project_path):
     # Read each model file and store the content
     model_files_content = []
     for model_file_path in model_file_paths:
-        with open(model_file_path, "r") as f:
+        with open(f"{project_path}/csharp-code/{model_file_path}", "r") as f:
             model_files_content.append(f.read())
 
     implementation_approach_template = f"""

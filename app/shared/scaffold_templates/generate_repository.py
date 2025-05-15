@@ -11,26 +11,79 @@ Usage:
 
 import os
 
-# Configuration - use relative paths
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.join(os.path.dirname(SCRIPT_DIR), "output", "csharp-code")
-MODELS_DIR = os.path.join(PROJECT_ROOT, "Models")
-REPOSITORIES_DIR = os.path.join(PROJECT_ROOT, "Repositories")
+
+def generate_repositories(project_name):
+    """Main function to generate repositories files"""
+    # Configuration - use dynamic paths based on project_name
+    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+    ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(SCRIPT_DIR)))
+    PROJECT_ROOT = os.path.join(ROOT_DIR, "app", "output", project_name, "csharp-code")
+    MODELS_DIR = os.path.join(PROJECT_ROOT, "Models")
+    REPOSITORIES_DIR = os.path.join(PROJECT_ROOT, "Repositories")
+
+    print(f"Looking for models in: {MODELS_DIR}")
+    print(f"Generating repositories in: {REPOSITORIES_DIR}")
+
+    # Verify that the Models directory exists
+    if not os.path.exists(MODELS_DIR):
+        print(f"Error: Models directory not found at {MODELS_DIR}")
+        print("Please make sure the path is correct and the project is generated.")
+        return False
+
+    # Create the Repositories directory if it doesn't exist
+    os.makedirs(REPOSITORIES_DIR, exist_ok=True)
+
+    # Get all model names
+    model_names = get_model_names(MODELS_DIR)
+    print(f"Found {len(model_names)} models")
+
+    try:
+        # Generate repositories for each model
+        for model_name in model_names:
+            print(f"Processing model: {model_name}")
+
+            # Create directory for the model
+            model_repo_dir = create_directory_for_model(model_name, REPOSITORIES_DIR)
+
+            # Check if this is a keyless entity
+            keyless = is_keyless_entity(model_name, MODELS_DIR)
+            if keyless:
+                print(f"  {model_name} is a keyless entity")
+
+            # Generate repository interface
+            interface_path = generate_repository_interface(model_name, model_repo_dir)
+            print(f"  Created interface: {interface_path}")
+
+            # Generate repository implementation
+            implementation_path = generate_repository_implementation(
+                model_name, model_repo_dir, is_keyless=keyless
+            )
+            print(f"  Created implementation: {implementation_path}")
+
+        print("Done generating repositories!")
+        return True
+
+    except Exception as e:
+        print(f"Error generating repositories: {str(e)}")
+        import traceback
+
+        traceback.print_exc()
+        return False
 
 
-def get_model_names():
+def get_model_names(models_dir):
     """Extract model names from C# files in the Models directory"""
     model_names = []
-    for file in os.listdir(MODELS_DIR):
+    for file in os.listdir(models_dir):
         if file.endswith(".cs") and not file.startswith("."):
             model_name = file[:-3]  # Remove .cs extension
             model_names.append(model_name)
     return sorted(model_names)
 
 
-def create_directory_for_model(model_name):
+def create_directory_for_model(model_name, repositories_dir):
     """Create a directory for the model's repository if it doesn't exist"""
-    model_repo_dir = os.path.join(REPOSITORIES_DIR, model_name)
+    model_repo_dir = os.path.join(repositories_dir, model_name)
     os.makedirs(model_repo_dir, exist_ok=True)
     return model_repo_dir
 
@@ -102,9 +155,9 @@ namespace sql2code.Repositories.{model_name}
     return implementation_path
 
 
-def is_keyless_entity(model_name):
+def is_keyless_entity(model_name, models_dir):
     """Determine if a model is a keyless entity by checking for the [Keyless] attribute"""
-    model_file_path = os.path.join(MODELS_DIR, f"{model_name}.cs")
+    model_file_path = os.path.join(models_dir, f"{model_name}.cs")
 
     if not os.path.exists(model_file_path):
         print(f"Warning: Model file {model_file_path} not found")
@@ -119,50 +172,4 @@ def is_keyless_entity(model_name):
             return False
     except Exception as e:
         print(f"Error reading model file {model_file_path}: {str(e)}")
-        return False
-
-
-def generate_repositories(project_name):
-    """Main function to generate repositories files"""
-    # Verify that the Models directory exists
-    if not os.path.exists(MODELS_DIR):
-        print(f"Error: Models directory not found at {MODELS_DIR}")
-        print("Please make sure the path is correct and the project is generated.")
-        return False
-
-    # Create the Repositories directory if it doesn't exist
-    os.makedirs(REPOSITORIES_DIR, exist_ok=True)
-
-    # Get all model names
-    model_names = get_model_names()
-    print(f"Found {len(model_names)} models")
-
-    try:
-        # Generate repositories for each model
-        for model_name in model_names:
-            print(f"Processing model: {model_name}")
-
-            # Create directory for the model
-            model_repo_dir = create_directory_for_model(model_name)
-
-            # Check if this is a keyless entity
-            keyless = is_keyless_entity(model_name)
-            if keyless:
-                print(f"  {model_name} is a keyless entity")
-
-            # Generate repository interface
-            interface_path = generate_repository_interface(model_name, model_repo_dir)
-            print(f"  Created interface: {interface_path}")
-
-            # Generate repository implementation
-            implementation_path = generate_repository_implementation(
-                model_name, model_repo_dir, is_keyless=keyless
-            )
-            print(f"  Created implementation: {implementation_path}")
-
-        print("Done!")
-        return True
-
-    except Exception as e:
-        print(f"Error generating repositories: {str(e)}")
         return False
