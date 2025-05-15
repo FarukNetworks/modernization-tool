@@ -9,9 +9,9 @@ llm = None
 
 if llm_config == "openai":
     llm = "openai/o3-mini"
-elif llm_config == "google":
+elif llm_config == "gemini":
     llm = "google/gemini-1.5-flash"
 elif llm_config == "anthropic":
-    llm = "anthropic/claude-3-7-sonnet-20250219"
+    llm = "anthropic/claude-3-7-sonnet-latest"
 elif llm_config == "bedrock":
     llm = "bedrock/us.meta.llama3-3-70b-instruct-v1:0"

@@ -5,7 +5,9 @@ import pyodbc
 import dotenv
 
 
-def get_dependencies(procedure_name, processed_objects=None):
+def get_dependencies(
+    procedure_name, project_path=None, connection_string=None, processed_objects=None
+):
     if processed_objects is None:
         processed_objects = set()
 
@@ -15,16 +17,36 @@ def get_dependencies(procedure_name, processed_objects=None):
 
     processed_objects.add(procedure_name)
 
+    # Default path if not provided
+    if project_path is None:
+        data_path = "output/data"
+    else:
+        data_path = os.path.join(project_path, "data")
+
     # Get dependencies
-    with open(os.path.join("output/data", "procedure_dependencies.json"), "r") as f:
-        all_procedures = json.load(f)
+    try:
+        with open(os.path.join(data_path, "procedure_dependencies.json"), "r") as f:
+            all_procedures = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        print(
+            f"Warning: Could not load dependencies for {procedure_name}. Using empty dependencies."
+        )
+        return []
 
     # Get object creation scripts
-    with open(os.path.join("output/data", "object_create_scripts.json"), "r") as f:
-        all_object_scripts = json.load(f)
+    try:
+        with open(os.path.join(data_path, "object_create_scripts.json"), "r") as f:
+            all_object_scripts = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        print(
+            f"Warning: Could not load object creation scripts. Using empty object scripts."
+        )
+        all_object_scripts = []
 
     # Create a lookup dictionary for object create scripts
-    create_scripts_lookup = {obj["name"]: obj for obj in all_object_scripts}
+    create_scripts_lookup = {}
+    if all_object_scripts:
+        create_scripts_lookup = {obj["name"]: obj for obj in all_object_scripts}
 
     # Find the procedure with matching name in the dependencies list
     procedure_dependencies = []
@@ -35,7 +57,8 @@ def get_dependencies(procedure_name, processed_objects=None):
 
     # Create connection to database to check identity columns and existing records
     dotenv.load_dotenv()
-    connection_string = os.getenv("CONNECTION_STRING")
+    if connection_string is None:
+        connection_string = os.getenv("CONNECTION_STRING")
     connection = pyodbc.connect(connection_string) if connection_string else None
     cursor = connection.cursor() if connection else None
 
@@ -77,7 +100,9 @@ def get_dependencies(procedure_name, processed_objects=None):
             # If this is a view, recursively get its dependencies
             if dep.get("type") == "VIEW":
                 # Get view dependencies recursively
-                view_deps = get_dependencies(dep["name"], processed_objects)
+                view_deps = get_dependencies(
+                    dep["name"], project_path, connection_string, processed_objects
+                )
                 dependency["view_dependencies"] = view_deps
 
         dependencies.append(dependency)
@@ -140,7 +165,9 @@ def get_dependencies(procedure_name, processed_objects=None):
                     dependency["auto_populated_columns"] = auto_populated_columns
 
                 if obj_type == "VIEW":
-                    view_deps = get_dependencies(full_name, processed_objects)
+                    view_deps = get_dependencies(
+                        full_name, project_path, connection_string, processed_objects
+                    )
                     dependency["view_dependencies"] = view_deps
 
             dependencies.append(dependency)
@@ -262,8 +289,8 @@ def check_enforced_dependencies(script):
     return False
 
 
-def analyze_procedure(procedure_name):
-    dependencies = get_dependencies(procedure_name)
+def analyze_procedure(procedure_name, project_path=None, connection_string=None):
+    dependencies = get_dependencies(procedure_name, project_path, connection_string)
 
     for i, dep in enumerate(dependencies, 1):
         schema = dep["schemaName"] or "N/A"
@@ -279,21 +306,23 @@ def analyze_procedure(procedure_name):
         else:
             auto_populated_info += "None"
 
+        # Determine the analysis directory
+        if project_path:
+            analysis_dir = os.path.join(project_path, "analysis", procedure_name)
+        else:
+            analysis_dir = f"output/analysis/{procedure_name}"
+
+        # Create directory if it doesn't exist
+        os.makedirs(analysis_dir, exist_ok=True)
+
         # Save the dependency tree to a JSON file
         with open(
-            f"output/analysis/{procedure_name}/{procedure_name}_dependency_tree.json",
+            os.path.join(analysis_dir, f"{procedure_name}_dependency_tree.json"),
             "w",
         ) as f:
             json.dump(dependencies, f, indent=2)
 
         print(dependencies)
-
-        # Save the JSON
-        with open(
-            f"output/analysis/{procedure_name}/{procedure_name}_dependency_tree.json",
-            "w",
-        ) as f:
-            json.dump(dependencies, f, indent=2)
 
     return dependencies
 

@@ -17,6 +17,16 @@ from shared.get_stored_procedures import extract_stored_procedures
 from shared.scaffold_database import scaffold_database
 from shared.discover_dependencies import discover_dependencies
 
+# Add the root directory to handle imports for the business analysis agent
+root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if root_dir not in sys.path:
+    sys.path.insert(0, root_dir)
+
+from agents.business_analysis_agent.main import (
+    run_business_analysis,
+    business_analysis,
+)
+
 
 def create_project_directory(project_name):
     """Create a new project directory in the output folder."""
@@ -181,6 +191,40 @@ def prompt_for_next_action(project_path, connection_string, project_name):
     elif selected == "Discover Dependencies":
         discover_dependencies(connection_string, project_name)
         # After discovery, ask again what to do next
+        prompt_for_next_action(project_path, connection_string, project_name)
+    elif selected == "Business Analysis":
+        # Get list of procedures to analyze
+        procedures = [
+            folder
+            for folder in os.listdir(os.path.join(project_path, "sql_raw"))
+            if os.path.isdir(os.path.join(project_path, "sql_raw", folder))
+        ]
+
+        # Ask if user wants to run full menu or analyze a specific procedure
+        if procedures:
+            choices = ["Show full menu"] + procedures + ["Return to main menu"]
+            questions = [
+                inquirer.List(
+                    "analysis_choice",
+                    message="What would you like to analyze?",
+                    choices=choices,
+                ),
+            ]
+            analysis_answer = inquirer.prompt(questions)
+            selected_analysis = analysis_answer["analysis_choice"]
+
+            if selected_analysis == "Show full menu":
+                # Run business analysis using the full menu
+                run_business_analysis(project_path)
+            elif selected_analysis == "Return to main menu":
+                pass
+            else:
+                # Analyze the selected procedure directly
+                business_analysis(selected_analysis, project_path)
+        else:
+            print("No procedures found. Please run 'Prepare Stored Procedures' first.")
+
+        # After analysis, ask again what to do next
         prompt_for_next_action(project_path, connection_string, project_name)
     elif selected == "Exit":
         print("Exiting. Goodbye!")
