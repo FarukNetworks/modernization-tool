@@ -7,14 +7,18 @@ import questionary
 from questionary import Choice
 import sqlparse
 
-# Add the parent directory to sys.path to allow importing from app
-sys.path.append(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add the project root directory to sys.path to allow importing from app
+# Get the project root directory (3 levels up from this file)
+project_root = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "..")
 )
+sys.path.insert(0, project_root)
 
+# Now import from app package
 from app.shared.get_stored_procedures import extract_stored_procedures
 from app.shared.scaffold_database import scaffold_database
 from app.shared.discover_dependencies import discover_dependencies
+from app.shared.run_sql_tests import run_sql_tests
 from app.shared.scaffold_templates.create_ef_analysis import (
     analyze_csharp_dependencies,
     run_csharp_dependency_analysis,
@@ -27,6 +31,10 @@ from app.agents.business_analysis_agent.main import (
 from app.agents.implementation_planner_agent.main import (
     implementation_planner,
     run_implementation_planner,
+)
+from app.agents.implementation_executor_agent.main import (
+    implementation_executor,
+    run_implementation_executor,
 )
 from app.agents.integration_test_spec_agent.main import (
     create_integration_test_spec,
@@ -304,6 +312,40 @@ def prompt_for_next_action(project_path, connection_string, project_name):
 
         # After planning, ask again what to do next
         prompt_for_next_action(project_path, connection_string, project_name)
+    elif selected == "Implementation Executor":
+        # Get list of procedures to execute implementation for
+        procedures = [
+            folder
+            for folder in os.listdir(os.path.join(project_path, "sql_raw"))
+            if os.path.isdir(os.path.join(project_path, "sql_raw", folder))
+        ]
+
+        # Ask if user wants to run full menu or execute implementation for a specific procedure
+        if procedures:
+            choices = ["Show full menu"] + procedures + ["Return to main menu"]
+            questions = [
+                inquirer.List(
+                    "executor_choice",
+                    message="What would you like to execute implementation for?",
+                    choices=choices,
+                ),
+            ]
+            executor_answer = inquirer.prompt(questions)
+            selected_procedure = executor_answer["executor_choice"]
+
+            if selected_procedure == "Show full menu":
+                # Run implementation executor using the full menu
+                run_implementation_executor(project_path)
+            elif selected_procedure == "Return to main menu":
+                pass
+            else:
+                # Execute implementation for the selected procedure directly
+                implementation_executor(selected_procedure, project_path)
+        else:
+            print("No procedures found. Please run 'Prepare Stored Procedures' first.")
+
+        # After execution, ask again what to do next
+        prompt_for_next_action(project_path, connection_string, project_name)
     elif selected == "Integration Test Specification":
         # Get list of procedures for integration test specification
         procedures = [
@@ -375,7 +417,7 @@ def prompt_for_next_action(project_path, connection_string, project_name):
     elif selected == "Run SQL Tests":
         # Implementation of running SQL tests
         print("Running SQL tests...")
-        # Add the logic to run SQL tests
+        run_sql_tests(project_path, connection_string)
         prompt_for_next_action(project_path, connection_string, project_name)
     elif selected == "Create Csharp Tests":
         # Implementation of creating C# tests

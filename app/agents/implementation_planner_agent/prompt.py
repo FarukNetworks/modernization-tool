@@ -688,10 +688,12 @@ Create an implementation plan that provides a comprehensive blueprint for conver
                 text=f"""
 {prompt}
 
+<output_format>
 ONLY RESPOND JSON AND VALID JSON FOLLOWING THIS TEMPLATE:
 {implementation_approach_template}
 {specific_considerations_template}
 {out_of_scope_template}
+</output_format>
 """
             )
         ],

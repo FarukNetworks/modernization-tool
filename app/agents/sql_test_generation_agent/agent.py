@@ -77,6 +77,7 @@ MSSQL Server: SQL Server 2019
 <rule>Use temp tables (#expected) in AssertEqualsTable, not table variables</rule>
 <rule>Generate only SQL code without any markdown, explanations or comments outside the SQL code</rule>
 <rule>Format your output as raw SQL that can be directly executed</rule>
+<rule>DO NOT include the EXEC tSQLt.NewTestClass statement in your output. This will be added automatically at the file level.</rule>
 </important_rules>
 
 <allowed_tsqlt_functions>
@@ -87,7 +88,8 @@ MSSQL Server: SQL Server 2019
 Your response must contain only the SQL code for the test procedure.
 DO NOT include code block markers like ```sql or ```.
 DO NOT add extra explanations before or after the code.
-Return only the raw SQL code.
+DO NOT include EXEC tSQLt.NewTestClass statements in your output.
+Return only the raw SQL code for the test procedure.
 </format>
 """,
 )

@@ -215,6 +215,9 @@ def generate_sql_test(procedure, project_path):
     if processed_count > 0:
         save_sql_file(test_file_path, test_content)
         print(f"SQL tests for {procedure} saved to {test_file_path}")
+        print(
+            f"You can now run the tests by selecting 'Run SQL Tests' from the main menu."
+        )
         return True
     else:
         print(f"No tests were generated for {procedure}")

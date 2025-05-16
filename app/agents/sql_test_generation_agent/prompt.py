@@ -128,7 +128,7 @@ def get_prompt(procedure_name, procedure_definition, project_path, scenario):
 
     # Format the prompt
     prompt = f"""
-I need you to generate a tSQLt test for the provided stored procedure following the integration test specification.
+I need you to generate a tSQLt test for the provided stored procedure following the integration test specification. The test class is already defined in the file so you don't need to include the EXEC tSQLt.NewTestClass statement.
 
 ---
 ### 🔧 **Input Specification**
@@ -147,8 +147,15 @@ I need you to generate a tSQLt test for the provided stored procedure following 
   {dependencies}
   ```
 
-STEPS to implement in the test: 
-{steps}
+Follow this structure and step for test scenario: 
+CREATE PROCEDURE [test_{procedure_name}].[test_{procedure_name}_{scenario_id}]
+AS
+BEGIN
+
+    {steps}
+
+END;
+GO
 
 Important rules:
 1. Create test with name: [test_{procedure_name}].[test_{procedure_name}_{scenario_id}]
@@ -156,8 +163,9 @@ Important rules:
 3. Include proper table faking and test data setup based on the scenario
 4. Validate only the specific columns mentioned in the validation criteria
 5. Follow the steps outlined above
+6. DO NOT include EXEC tSQLt.NewTestClass statements - this will be added automatically at the file level
 
-Return only valid SQL code without explanations or markdown.
+Return only valid SQL code without explanations or markdown. Start directly with CREATE PROCEDURE.
 """
 
     return prompt
