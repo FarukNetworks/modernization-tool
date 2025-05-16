@@ -1,6 +1,6 @@
 from google.genai import types
 import json
-from shared.scaffold_templates.create_ef_analysis import get_dependencies
+from app.shared.get_dependencies import get_dependencies
 
 
 def get_prompt(procedure_name, procedure_definition, project_path, node):

@@ -6,33 +6,35 @@ import pyodbc
 import questionary
 from questionary import Choice
 import sqlparse
-import sys
-import os
 
 # Add the parent directory to sys.path to allow importing from app
 sys.path.append(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
-from shared.get_stored_procedures import extract_stored_procedures
-from shared.scaffold_database import scaffold_database
-from shared.discover_dependencies import discover_dependencies
-from shared.scaffold_templates.create_ef_analysis import (
+
+from app.shared.get_stored_procedures import extract_stored_procedures
+from app.shared.scaffold_database import scaffold_database
+from app.shared.discover_dependencies import discover_dependencies
+from app.shared.scaffold_templates.create_ef_analysis import (
     analyze_csharp_dependencies,
     run_csharp_dependency_analysis,
 )
 
-# Add the root directory to handle imports for the business analysis agent
-root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if root_dir not in sys.path:
-    sys.path.insert(0, root_dir)
-
-from agents.business_analysis_agent.main import (
+from app.agents.business_analysis_agent.main import (
     run_business_analysis,
     business_analysis,
 )
-from agents.implementation_planner_agent.main import (
+from app.agents.implementation_planner_agent.main import (
     implementation_planner,
     run_implementation_planner,
+)
+from app.agents.integration_test_spec_agent.main import (
+    create_integration_test_spec,
+    run_integration_test_spec,
+)
+from app.agents.sql_test_generation_agent.main import (
+    generate_sql_test,
+    run_sql_test_generation,
 )
 
 
@@ -301,6 +303,84 @@ def prompt_for_next_action(project_path, connection_string, project_name):
             print("No procedures found. Please run 'Prepare Stored Procedures' first.")
 
         # After planning, ask again what to do next
+        prompt_for_next_action(project_path, connection_string, project_name)
+    elif selected == "Integration Test Specification":
+        # Get list of procedures for integration test specification
+        procedures = [
+            folder
+            for folder in os.listdir(os.path.join(project_path, "sql_raw"))
+            if os.path.isdir(os.path.join(project_path, "sql_raw", folder))
+        ]
+
+        # Ask if user wants to run full menu or generate test specs for a specific procedure
+        if procedures:
+            choices = ["Show full menu"] + procedures + ["Return to main menu"]
+            questions = [
+                inquirer.List(
+                    "test_spec_choice",
+                    message="Which procedure would you like to generate test specifications for?",
+                    choices=choices,
+                ),
+            ]
+            test_spec_answer = inquirer.prompt(questions)
+            selected_procedure = test_spec_answer["test_spec_choice"]
+
+            if selected_procedure == "Show full menu":
+                # Run integration test specification using the full menu
+                run_integration_test_spec(project_path)
+            elif selected_procedure == "Return to main menu":
+                pass
+            else:
+                # Generate test specifications for the selected procedure directly
+                create_integration_test_spec(selected_procedure, project_path)
+        else:
+            print("No procedures found. Please run 'Prepare Stored Procedures' first.")
+
+        # After test specification, ask again what to do next
+        prompt_for_next_action(project_path, connection_string, project_name)
+    elif selected == "Generate SQL Tests":
+        # Get list of procedures for SQL test generation
+        procedures = [
+            folder
+            for folder in os.listdir(os.path.join(project_path, "sql_raw"))
+            if os.path.isdir(os.path.join(project_path, "sql_raw", folder))
+        ]
+
+        # Ask if user wants to run full menu or generate tests for a specific procedure
+        if procedures:
+            choices = ["Show full menu"] + procedures + ["Return to main menu"]
+            questions = [
+                inquirer.List(
+                    "sql_test_choice",
+                    message="Which procedure would you like to generate SQL tests for?",
+                    choices=choices,
+                ),
+            ]
+            sql_test_answer = inquirer.prompt(questions)
+            selected_procedure = sql_test_answer["sql_test_choice"]
+
+            if selected_procedure == "Show full menu":
+                # Run SQL test generation using the full menu
+                run_sql_test_generation(project_path)
+            elif selected_procedure == "Return to main menu":
+                pass
+            else:
+                # Generate SQL tests for the selected procedure directly
+                generate_sql_test(selected_procedure, project_path)
+        else:
+            print("No procedures found. Please run 'Prepare Stored Procedures' first.")
+
+        # After SQL test generation, ask again what to do next
+        prompt_for_next_action(project_path, connection_string, project_name)
+    elif selected == "Run SQL Tests":
+        # Implementation of running SQL tests
+        print("Running SQL tests...")
+        # Add the logic to run SQL tests
+        prompt_for_next_action(project_path, connection_string, project_name)
+    elif selected == "Create Csharp Tests":
+        # Implementation of creating C# tests
+        print("Creating C# tests...")
+        # Add the logic to create C# tests
         prompt_for_next_action(project_path, connection_string, project_name)
     elif selected == "Exit":
         print("Exiting. Goodbye!")
