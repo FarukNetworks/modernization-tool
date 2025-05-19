@@ -49,6 +49,9 @@ from app.agents.csharp_test_generation_agent.main import (
     run_csharp_test_generation,
     generate_csharp_tests_cli,
 )
+from app.agents.mcp_agent.main import (
+    run_implementation_executor as run_mcp_implementation_executor,
+)
 
 
 def create_project_directory(project_name):
@@ -191,6 +194,7 @@ def prompt_for_next_action(project_path, connection_string, project_name):
                 "Csharp Dependency Analysis",
                 "Implementation Planner",
                 "Implementation Executor",
+                "MCP Implementation Executor",
                 "Integration Test Specification",
                 "Generate SQL Tests",
                 "Run SQL Tests",
@@ -346,6 +350,44 @@ def prompt_for_next_action(project_path, connection_string, project_name):
             else:
                 # Execute implementation for the selected procedure directly
                 implementation_executor(selected_procedure, project_path)
+        else:
+            print("No procedures found. Please run 'Prepare Stored Procedures' first.")
+
+        # After execution, ask again what to do next
+        prompt_for_next_action(project_path, connection_string, project_name)
+    elif selected == "MCP Implementation Executor":
+        # Get list of procedures to execute implementation for
+        procedures = [
+            folder
+            for folder in os.listdir(os.path.join(project_path, "sql_raw"))
+            if os.path.isdir(os.path.join(project_path, "sql_raw", folder))
+        ]
+
+        # Ask if user wants to run full menu or execute implementation for a specific procedure
+        if procedures:
+            choices = procedures + ["Return to main menu"]
+            questions = [
+                inquirer.List(
+                    "mcp_executor_choice",
+                    message="Which procedure would you like to implement with MCP?",
+                    choices=choices,
+                ),
+            ]
+            mcp_executor_answer = inquirer.prompt(questions)
+            selected_procedure = mcp_executor_answer["mcp_executor_choice"]
+
+            if selected_procedure == "Return to main menu":
+                pass
+            else:
+                # Execute implementation for the selected procedure using MCP agent
+                print(
+                    f"Running MCP Implementation Executor for {selected_procedure}..."
+                )
+                import asyncio
+
+                asyncio.run(
+                    run_mcp_implementation_executor(selected_procedure, project_path)
+                )
         else:
             print("No procedures found. Please run 'Prepare Stored Procedures' first.")
 
