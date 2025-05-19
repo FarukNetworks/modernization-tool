@@ -44,6 +44,11 @@ from app.agents.sql_test_generation_agent.main import (
     generate_sql_test,
     run_sql_test_generation,
 )
+from app.agents.csharp_test_generation_agent.main import (
+    generate_csharp_test,
+    run_csharp_test_generation,
+    generate_csharp_tests_cli,
+)
 
 
 def create_project_directory(project_name):
@@ -420,9 +425,10 @@ def prompt_for_next_action(project_path, connection_string, project_name):
         run_sql_tests(project_path, connection_string)
         prompt_for_next_action(project_path, connection_string, project_name)
     elif selected == "Create Csharp Tests":
-        # Implementation of creating C# tests
-        print("Creating C# tests...")
-        # Add the logic to create C# tests
+        # Use the simplified CLI function
+        generate_csharp_tests_cli(project_path)
+
+        # After C# test generation, ask again what to do next
         prompt_for_next_action(project_path, connection_string, project_name)
     elif selected == "Exit":
         print("Exiting. Goodbye!")

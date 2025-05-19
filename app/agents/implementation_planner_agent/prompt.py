@@ -147,7 +147,7 @@ def get_prompt(schema_name, procedure_name, procedure_definition, project_path):
           {{
             "name": "I{procedure_name_only}_Service",
             "namespace": "sql2code.Services",
-            "path": "Services/{procedure_name_only}Services/I{procedure_name_only}_Service.cs",
+            "path": "Services/{procedure_name_only}_Services/I{procedure_name_only}_Service.cs",
             "description": "Service interface for {procedure_name_only}",
             "methods": [
               {{

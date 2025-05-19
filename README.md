@@ -44,3 +44,5 @@ docker compose up
 ```bash
 python app/UI/CLI/main.py
 ```
+
+# SELECT THE STEP FOR EXECUTION
