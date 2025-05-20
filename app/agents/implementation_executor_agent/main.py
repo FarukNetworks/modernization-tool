@@ -28,13 +28,6 @@ def get_procedures(project_path):
     return procedures
 
 
-def create_analysis_directory(procedure, project_path):
-    """Create analysis directory for the selected procedure"""
-    analysis_dir = os.path.join(project_path, "analysis", procedure)
-    os.makedirs(analysis_dir, exist_ok=True)
-    return analysis_dir
-
-
 def extract_files_from_response(result, project_path):
     """Extract C# files from the model response and save them to csharp-code directory"""
     # Extract file names and codes

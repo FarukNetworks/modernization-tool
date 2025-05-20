@@ -49,7 +49,7 @@ from app.agents.csharp_test_generation_agent.main import (
     run_csharp_test_generation,
     generate_csharp_tests_cli,
 )
-from app.agents.mcp_agent.main import (
+from app.agents.mcp_implementation_executor_agent.main import (
     run_implementation_executor as run_mcp_implementation_executor,
 )
 

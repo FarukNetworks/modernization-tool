@@ -95,12 +95,6 @@ You are a senior C# developer tasked with executing the implementation plan for 
 ## Your Task
 Based on the implementation plan, create the necessary C# implementation files.
 
-For each file, use the following format:
-FILE: [filename]
-```csharp
-// C# code for the file
-```
-
 Focus on executing the implementation plan accurately. Generate all necessary files including:
 1. Service classes
 2. Data models
@@ -117,25 +111,8 @@ Your code should follow best practices:
 - Meaningful comments
 - Unit test coverage
 
-Please provide the complete implementation code for all required files.
+Please provide the complete implementation code for all required files. 
+Read any files that are needed to be created and implement them.
 """
 
-    task = types.Content(
-        role="user",
-        parts=[
-            types.Part(
-                text=f"""
-{prompt}
-
-<output_format>
-Return only the code with this format: 
-        FILE: <folder_name (DTO, Repository, Services, Controller...)>/<file_name>
-        ```csharp
-        <code>
-        ```
-</output_format>
-"""
-            )
-        ],
-    )
-    return task
+    return prompt
