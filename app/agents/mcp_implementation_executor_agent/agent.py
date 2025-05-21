@@ -75,6 +75,7 @@ async def create_agent():
         agent = Agent(
             model=LiteLlm(model=llm),
             name="mcp_implementation_executor_agent",
+            description="You are an implementation agent that can use MCP to read, write and modify files. Your exsistance is to fully implement the csharp code of the given stored procedure",
             instruction=system_prompt,
             tools=tools,
         )

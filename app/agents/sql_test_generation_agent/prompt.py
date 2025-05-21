@@ -67,7 +67,7 @@ def get_prompt(procedure_name, procedure_definition, project_path, scenario):
     output_dir_project = os.path.join(project_path, "output")
 
     # Generate possible filenames
-    filenames = [f"{procedure_name}_returnable_objects.json"]
+    filenames = [f"returnable_objects.json"]
 
     # Initialize possible paths with basic locations
     possible_returnable_paths = []

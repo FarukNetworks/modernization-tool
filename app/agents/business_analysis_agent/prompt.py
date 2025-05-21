@@ -370,19 +370,19 @@ FILE: <file_name>
 
 Response should have 3 files: 
 
-FILE: {procedure_name}_business_rules.json
-FILE: {procedure_name}_business_functions.json
-FILE: {procedure_name}_business_processes.json
+FILE: business_rules.json
+FILE: business_functions.json
+FILE: business_processes.json
 
 The respond should look like this:
 
-FILE: {procedure_name}_business_rules.json
+FILE: business_rules.json
 {business_rules_json}
 
-FILE: {procedure_name}_business_functions.json
+FILE: business_functions.json
 {business_functions_json}
 
-FILE: {procedure_name}_business_processes.json
+FILE: business_processes.json
 {business_processes_json}
 """
             )
@@ -407,13 +407,13 @@ def get_returnable_objects_prompt(
 
         # Use glob pattern matching to find the files regardless of exact name
         business_rules_files = glob.glob(
-            os.path.join(analysis_dir, "*_business_rules.json")
+            os.path.join(analysis_dir, "business_rules.json")
         )
         business_functions_files = glob.glob(
-            os.path.join(analysis_dir, "*_business_functions.json")
+            os.path.join(analysis_dir, "business_functions.json")
         )
         business_processes_files = glob.glob(
-            os.path.join(analysis_dir, "*_business_processes.json")
+            os.path.join(analysis_dir, "business_processes.json")
         )
 
         if not business_rules_files:
@@ -520,9 +520,9 @@ Take the time to review the outputs and make sure they truly reflect the content
 
 ## Deliverables
 Produce exactly 2 JSON files:
-1. {procedure_name}_returnable_objects.json  
-2. {procedure_name}_process_object_mapping.json
-3. {procedure_name}_testable_units.json
+1. returnable_objects.json  
+2. process_object_mapping.json
+3. testable_units.json
 
 ALWAYS RESPOND WITH: 
 FILE: <file_name>
@@ -532,13 +532,13 @@ FILE: <file_name>
 
 The response should have 2 files with the following structure: 
 
-FILE: {procedure_name}_returnable_objects.json
+FILE: returnable_objects.json
 {returnable_objects_json}
 
-FILE: {procedure_name}_process_object_mapping.json
+FILE: process_object_mapping.json
 {process_object_mapping_json}
 
-FILE: {procedure_name}_testable_units.json
+FILE: testable_units.json
 {testable_units_json}
 """
 

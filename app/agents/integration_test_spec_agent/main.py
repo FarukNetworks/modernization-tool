@@ -91,12 +91,12 @@ def check_required_files(procedure, project_path):
         return False
 
     required_files = [
-        "*_business_rules.json",
-        "*_business_functions.json",
-        "*_business_processes.json",
-        "*_returnable_objects.json",
-        "*_process_object_mapping.json",
-        "*_ef_analysis.json",
+        "business_rules.json",
+        "business_functions.json",
+        "business_processes.json",
+        "returnable_objects.json",
+        "process_object_mapping.json",
+        "ef_analysis.json",
     ]
 
     for pattern in required_files:

@@ -55,14 +55,14 @@ def get_prompt(procedure_name, project_path, scenario):
 
     # EF analysis
     with open(
-        f"{project_path}/analysis/{procedure_name}/{procedure_name}_ef_analysis.json",
+        f"{project_path}/analysis/{procedure_name}/ef_analysis.json",
         "r",
     ) as f:
         ef_analysis = json.load(f)
 
     # Get all service files
     service_files = []
-    service_dir = f"{project_path}/csharp-code/Services/{procedure_name_only}_Services"
+    service_dir = f"{project_path}/csharp-code/Services/{procedure_name_only}"
     if os.path.exists(service_dir):
         for file in os.listdir(service_dir):
             if file.endswith(".cs"):
@@ -76,26 +76,22 @@ def get_prompt(procedure_name, project_path, scenario):
     for service_file in service_files:
         # Get service file name
         service_file_name = os.path.basename(service_file)
-        procedure_name_with_service = procedure_name_only + "_Service.cs"
-        procedure_name_with_service_interface = (
-            "I" + procedure_name_only + "_Service.cs"
-        )
-        if service_file_name == procedure_name_with_service:
+        # Read service implementation file (non-interface)
+        if not service_file_name.startswith("I"):
             service_name = service_file_name
             with open(service_file, "r") as f:
                 service_content = f.read()
             procedure_services.append(service_file)
             print(f"✅ Found service file: {service_name}")
 
-        if service_file_name == procedure_name_with_service_interface:
+        # Read service interface file
+        if service_file_name.startswith("I"):
             service_interface_name = service_file_name
             procedure_services.append(service_file)
             print(f"✅ Found service interface file: {service_interface_name}")
 
     if not service_name:
-        raise ValueError(
-            f"No service file found for procedure {procedure_name}. Expected file: {procedure_name}_Service.cs"
-        )
+        raise ValueError(f"No service file found for procedure {procedure_name}.")
 
     service_name_base = service_name.replace(".cs", "")
     procedure_services_content = []

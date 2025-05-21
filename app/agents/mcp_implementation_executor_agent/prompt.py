@@ -39,21 +39,21 @@ def get_prompt(procedure_name, procedure_definition, project_path):
         project_path,
         "analysis",
         procedure_name,
-        f"{procedure_name}_business_rules.json",
+        f"business_rules.json",
     )
 
     business_functions_json = os.path.join(
         project_path,
         "analysis",
         procedure_name,
-        f"{procedure_name}_business_functions.json",
+        f"business_functions.json",
     )
 
     business_processes_json = os.path.join(
         project_path,
         "analysis",
         procedure_name,
-        f"{procedure_name}_business_processes.json",
+        f"business_processes.json",
     )
 
     # Get implementation plan
@@ -61,7 +61,7 @@ def get_prompt(procedure_name, procedure_definition, project_path):
         project_path,
         "analysis",
         procedure_name,
-        f"{procedure_name}_implementation_plan.json",
+        f"implementation_plan.json",
     )
     implementation_plan = {}
     if os.path.exists(implementation_plan_path):
@@ -92,7 +92,7 @@ Implement a migration of a SQL stored procedure to C# within our existing .NET 9
 1.  The original SQL stored procedure (reference) - [{procedure_definition}]
 2.  Entity Framework Core analysis:
     **This analysis contains information about dependencies already created in the project using the scaffold command. Models and DbContext details are in the JSON file:**
-    - [READ: analysis/{procedure_name}/{procedure_name}_ef_analysis.json]
+    - [READ: analysis/{procedure_name}/ef_analysis.json]
 3.  Use the `sql2code` namespace.
 4.  Each model has its own repository inheriting from the base repository. Extend individual repositories in the Repositories folder as needed.
 
@@ -171,10 +171,10 @@ Project 'sql2code' has the following package references
 
 Implement the components step-by-step according to the task list. For each component, provide the complete C# implementation with comprehensive XML documentation. Maintain exact feature parity (in terms of functional outcome) with the original stored procedure, implementing the logic according to the provided JSON plan, without introducing new features. Validate each component after implementation to confirm functional equivalence.
 
-Provide an additional file, Extensions/{procedure_name}_Extensions.cs, containing the builder registration for all required services, repositories, mappers, and other dependencies, within a method called Add{procedure_name}_Services.
+Provide an additional file, Extensions/{procedure_name}/Extensions.cs, containing the builder registration for all required services, repositories, mappers, and other dependencies, within a method.
 
 ```csharp
-// Extensions/{procedure_name}_Extensions.cs
+// Extensions/{procedure_name}/Extensions.cs
 public static class {procedure_name}Extensions
 {{
     public static IServiceCollection Add{procedure_name}_Services(this IServiceCollection services, IConfiguration configuration)
@@ -188,10 +188,10 @@ public static class {procedure_name}Extensions
 Given the existing Models folder and DbContext at /csharp-code/Data/AppDbContext.cs, generate the service and API layers for a new procedure. Follow these specifications:
 
 *Service Layer*
-Create the service layer within the Services/{procedure_name} folder. The primary business logic should reside in a single file named {procedure_name}_Service.cs. Its corresponding interface should be named I{procedure_name}_Service.cs.
+Create the service layer within the Services/{procedure_name} folder. The primary business logic should reside in a single file with interface file.
 
 *API Layer*
-Construct the API layer within the Controllers folder. Name the API controller file {procedure_name}_Controller.cs and its interface I{procedure_name}_Controller.cs.
+Construct the API layer within the Controllers folder. Create a Controller folder Controllers/{procedure_name} and create a Controller file inside it.
 
 <important_rules>
 <rule>
@@ -263,6 +263,12 @@ When implementing LINQ queries with Entity Framework Core, be aware of these tra
     *   Both the correct and incorrect query examples, properly commented.
 
 Provide complete, executable code for each scenario, including comprehensive comments explaining the reasoning behind each approach and potential pitfalls. Implement benchmarks to quantify the performance improvements of the recommended patterns. Ensure that all code is compatible with the latest version of Entity Framework Core. After completing each section, verify progress before continuing to ensure clarity and correctness.
+
+All the procedures new files should be created in the folder with the procedure name {procedure_name}. So all the folders will look like this: 
+- Controllers/{procedure_name}
+- Services/{procedure_name}
+- Extensions/{procedure_name}
+- DTOs/{procedure_name}
 """
 
     return prompt

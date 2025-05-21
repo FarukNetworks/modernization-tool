@@ -26,42 +26,42 @@ def get_prompt(schema_name, procedure_name, procedure_definition, project_path):
 
     # business_rules
     with open(
-        f"{project_path}/analysis/{procedure_name}/{procedure_name}_business_rules.json",
+        f"{project_path}/analysis/{procedure_name}/business_rules.json",
         "r",
     ) as f:
         business_rules_json = json.load(f)
 
     # business_functions
     with open(
-        f"{project_path}/analysis/{procedure_name}/{procedure_name}_business_functions.json",
+        f"{project_path}/analysis/{procedure_name}/business_functions.json",
         "r",
     ) as f:
         business_functions_json = json.load(f)
 
     # business_processes
     with open(
-        f"{project_path}/analysis/{procedure_name}/{procedure_name}_business_processes.json",
+        f"{project_path}/analysis/{procedure_name}/business_processes.json",
         "r",
     ) as f:
         business_processes_json = json.load(f)
 
     # returnable_objects
     with open(
-        f"{project_path}/analysis/{procedure_name}/{procedure_name}_returnable_objects.json",
+        f"{project_path}/analysis/{procedure_name}/returnable_objects.json",
         "r",
     ) as f:
         returnable_objects_json = json.load(f)
 
     # process_object_mapping
     with open(
-        f"{project_path}/analysis/{procedure_name}/{procedure_name}_process_object_mapping.json",
+        f"{project_path}/analysis/{procedure_name}/process_object_mapping.json",
         "r",
     ) as f:
         process_object_mapping_json = json.load(f)
 
     # Get ef_analysis JSON file from analysis directory
     with open(
-        f"{project_path}/analysis/{procedure_name}/{procedure_name}_ef_analysis.json",
+        f"{project_path}/analysis/{procedure_name}/ef_analysis.json",
         "r",
     ) as f:
         ef_analysis = json.load(f)
@@ -105,7 +105,7 @@ def get_prompt(schema_name, procedure_name, procedure_definition, project_path):
             model_files_content.append(f.read())
 
     implementation_approach_template = f"""
-    FILE: {procedure_name}_implementation_approach.json
+    FILE: implementation_approach.json
 ```json
  {{
   "implementationApproach": {{
@@ -117,14 +117,14 @@ def get_prompt(schema_name, procedure_name, procedure_definition, project_path):
         "position": 1,
         "components": [
           {{
-            "name": "{procedure_name_only}_Controller",
+            "name": "Controller",
             "namespace": "sql2code.Controllers",
-            "path": "Controllers/{procedure_name_only}_Controller.cs",
+            "path": "Controllers/{procedure_name_only}/Controller.cs",
             "description": "[Component Description]",
             "mappedProcess": "[Related Process]",
             "methods": [
               {{
-                "name": "{procedure_name_only}_ControllerMethod",
+                "name": "ControllerMethod",
                 "signature": "[Method Signature]",
                 "description": "[Method Description]",
                 "mappedFunction": "[Related Business Function]",
@@ -145,22 +145,22 @@ def get_prompt(schema_name, procedure_name, procedure_definition, project_path):
         "position": 2,
         "components": [
           {{
-            "name": "I{procedure_name_only}_Service",
+            "name": "IService",
             "namespace": "sql2code.Services",
-            "path": "Services/{procedure_name_only}_Services/I{procedure_name_only}_Service.cs",
+            "path": "Services/{procedure_name_only}/IService.cs",
             "description": "Service interface for {procedure_name_only}",
             "methods": [
               {{
-                "name": "{procedure_name_only}_ServiceMethod",
+                "name": "ServiceMethod",
                 "signature": "[Method Signature]",
                 "description": "[Method Description]"
               }}
             ]
           }},
           {{
-            "name": "{procedure_name_only}_Service",
+            "name": "Service",
             "namespace": "sql2code.Services",
-            "path": "Services/{procedure_name_only}_Services/{procedure_name_only}_Service.cs",
+            "path": "Services/{procedure_name_only}/Service.cs",
             "description": "Service orchestrating business processes",
             "mappedProcess": "PROC-XXX",
             "decisionPoints": [
@@ -186,7 +186,7 @@ def get_prompt(schema_name, procedure_name, procedure_definition, project_path):
             ],
             "methods": [
               {{
-                "name": "{procedure_name_only}_ServiceMethod",
+                "name": "ServiceMethod",
                 "signature": "[Method Signature]",
                 "description": "[Method Description]",
                 "mappedFunction": "[Related Business Function]",
@@ -204,20 +204,20 @@ def get_prompt(schema_name, procedure_name, procedure_definition, project_path):
         "position": 3,
         "components": [
         {{
-        "name": "I{procedure_name_only}_DtoMapper1",
+        "name": "IDtoMapper",
         "namespace": "sql2code.Mappers",
-        "path": "/Mappers/{procedure_name_only}/I{procedure_name_only}_DtoMapper1.cs",
+        "path": "/Mappers/{procedure_name_only}/IDtoMapper.cs",
         "description": "Mapper interface for transforming repository data into domain objects",
 
         }},
           {{
-            "name": "{procedure_name_only}_DtoMapper1",
+            "name": "DtoMapper",
             "namespace": "sql2code.Mappers",
-            "path": "/Mappers/{procedure_name_only}/{procedure_name_only}_DtoMapper1.cs",
+            "path": "/Mappers/{procedure_name_only}/DtoMapper.cs",
             "description": "Mapper for transforming repository data into domain objects",
             "methods": [
               {{
-                "name": "{procedure_name_only}_DtoMapper1Method1",
+                "name": "DtoMapperMethod1",
                 "signature": "[Method Signature]",
                 "description": "[Method Description]",
                 "transformationLogic": "[Description of the transformation logic]",
@@ -240,7 +240,7 @@ def get_prompt(schema_name, procedure_name, procedure_definition, project_path):
         {{
           "name": "Exception Handling Service",
           "namespace": "sql2code.Exceptions",
-          "path": "DTOs/{procedure_name_only}/Exceptions/{procedure_name_only}_ExceptionHandlingService.cs",
+          "path": "DTOs/{procedure_name_only}/Exceptions/ExceptionHandlingService.cs",
           "description": "Service for exception handling"
         }}
       }}
@@ -249,9 +249,9 @@ def get_prompt(schema_name, procedure_name, procedure_definition, project_path):
         "position": 5,
         "components": [
           {{
-            "name": "{procedure_name_only}_Dto1",
+            "name": "Dto1",
             "namespace": "sql2code.DTOs",
-            "path": "DTOs/{procedure_name_only}/{procedure_name_only}_Dto1.cs",
+            "path": "DTOs/{procedure_name_only}/Dto1.cs",
             "properties": [
               {{
                 "name": "[Property Name]",
@@ -355,7 +355,7 @@ def get_prompt(schema_name, procedure_name, procedure_definition, project_path):
 """
 
     out_of_scope_template = f"""
-FILE: {procedure_name}_out_of_scope.json
+FILE: out_of_scope.json
    ```json
 {{
   "outOfScope": {{
@@ -391,7 +391,7 @@ FILE: {procedure_name}_out_of_scope.json
     """
 
     specific_considerations_template = f"""
-    FILE: {procedure_name}_specific_considerations.json
+    FILE: specific_considerations.json
    ```json
 {{
   "specificConsiderations": {{

@@ -52,6 +52,12 @@ from app.agents.csharp_test_generation_agent.main import (
 from app.agents.mcp_implementation_executor_agent.main import (
     run_mcp_implementation_executor,
 )
+from app.agents.faq_builder_agent.main import (
+    run_faq_builder,
+)
+from app.agents.testable_unit_scenario_agent.main import (
+    run_testable_unit_scenarios,
+)
 
 
 def create_project_directory(project_name):
@@ -191,6 +197,8 @@ def prompt_for_next_action(project_path, connection_string, project_name):
                 "Scaffold Database",
                 "Discover Dependencies",
                 "Business Analysis",
+                "FAQ Builder",
+                "Testable Unit Scenarios",
                 "Csharp Dependency Analysis",
                 "Implementation Planner",
                 "Implementation Executor",
@@ -253,6 +261,79 @@ def prompt_for_next_action(project_path, connection_string, project_name):
 
         # After analysis, ask again what to do next
         prompt_for_next_action(project_path, connection_string, project_name)
+    elif selected == "Testable Unit Scenarios":
+        # Get list of procedures to analyze
+        procedures = [
+            folder
+            for folder in os.listdir(os.path.join(project_path, "sql_raw"))
+            if os.path.isdir(os.path.join(project_path, "sql_raw", folder))
+        ]
+
+        # Ask if user wants to run full menu or analyze a specific procedure
+        if procedures:
+            choices = ["Show full menu"] + procedures + ["Return to main menu"]
+            questions = [
+                inquirer.List(
+                    "testable_unit_scenarios_choice",
+                    message="What would you like to build?",
+                    choices=choices,
+                ),
+            ]
+            testable_unit_scenarios_answer = inquirer.prompt(questions)
+            selected_testable_unit_scenarios = testable_unit_scenarios_answer[
+                "testable_unit_scenarios_choice"
+            ]
+
+            if selected_testable_unit_scenarios == "Show full menu":
+                # Run testable unit scenarios using the full menu
+                run_testable_unit_scenarios(project_path)
+            elif selected_testable_unit_scenarios == "Return to main menu":
+                pass
+            else:
+                # Analyze the selected procedure directly
+                run_testable_unit_scenarios(
+                    selected_testable_unit_scenarios, project_path
+                )
+        else:
+            print("No procedures found. Please run 'Prepare Stored Procedures' first.")
+
+        # After analysis, ask again what to do next
+        prompt_for_next_action(project_path, connection_string, project_name)
+    elif selected == "FAQ Builder":
+        # Get list of procedures to analyze
+        procedures = [
+            folder
+            for folder in os.listdir(os.path.join(project_path, "sql_raw"))
+            if os.path.isdir(os.path.join(project_path, "sql_raw", folder))
+        ]
+
+        # Ask if user wants to run full menu or analyze a specific procedure
+        if procedures:
+            choices = ["Show full menu"] + procedures + ["Return to main menu"]
+            questions = [
+                inquirer.List(
+                    "faq_builder_choice",
+                    message="What would you like to build?",
+                    choices=choices,
+                ),
+            ]
+            faq_builder_answer = inquirer.prompt(questions)
+            selected_faq_builder = faq_builder_answer["faq_builder_choice"]
+
+            if selected_faq_builder == "Show full menu":
+                # Run FAQ builder using the full menu
+                run_faq_builder(project_path)
+            elif selected_faq_builder == "Return to main menu":
+                pass
+            else:
+                # Analyze the selected procedure directly
+                run_faq_builder(selected_faq_builder, project_path)
+        else:
+            print("No procedures found. Please run 'Prepare Stored Procedures' first.")
+
+        # After analysis, ask again what to do next
+        prompt_for_next_action(project_path, connection_string, project_name)
+
     elif selected == "Csharp Dependency Analysis":
         # Get list of procedures for C# dependency analysis
         procedures = [

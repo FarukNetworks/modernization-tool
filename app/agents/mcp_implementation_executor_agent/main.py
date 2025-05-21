@@ -76,6 +76,7 @@ async def get_agent_async(project_path):
     root_agent = LlmAgent(
         model=LiteLlm(model=llm),
         name="mcp_implementation_executor_agent",
+        description="You are an implementation agent that can use MCP to read, write and modify files. Your exsistance is to fully implement the csharp code of the given stored procedure",
         instruction=system_prompt,
         tools=tools,  # Provide the MCP tools to the ADK agent
     )

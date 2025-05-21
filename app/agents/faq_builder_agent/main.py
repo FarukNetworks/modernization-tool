@@ -6,8 +6,8 @@ import re
 import glob
 from google.adk.sessions import InMemorySessionService
 from google.adk.runners import Runner
-from app.agents.implementation_planner_agent.prompt import get_prompt
-from app.agents.implementation_planner_agent.agent import root_agent
+from app.agents.faq_builder_agent.prompt import get_prompt
+from app.agents.faq_builder_agent.agent import root_agent
 from app.shared.get_dependencies import get_dependencies
 
 # Add parent directory to path to ensure imports work
@@ -88,20 +88,10 @@ def check_required_files(procedure, project_path):
             print(f"Error: Required file {pattern} not found for {procedure}")
             return False
 
-    # Check if the Abstractions/Repositories folder exists
-    abstractions_path = os.path.join(
-        project_path, "csharp-code", "Abstractions", "Repositories"
-    )
-    if not os.path.exists(abstractions_path):
-        print(
-            f"Error: Abstractions/Repositories folder not found at {abstractions_path}"
-        )
-        return False
-
     return True
 
 
-def implementation_planner(procedure, project_path):
+def faq_builder(procedure, project_path):
     """Main entry point - plan implementation for a procedure based on its analysis"""
     print(f"\nStarting implementation planning for {procedure}")
 
@@ -124,7 +114,7 @@ def implementation_planner(procedure, project_path):
     # Create a new session
     session_service = InMemorySessionService()
 
-    APP_NAME = "Stored Procedure Implementation Planner"
+    APP_NAME = "Stored Procedure FAQ Builder"
     USER_ID = "project_owner"
     SESSION_ID = str(uuid.uuid4())
     session = session_service.create_session(
@@ -144,22 +134,20 @@ def implementation_planner(procedure, project_path):
         session_service=session_service,
     )
 
-    # Get the schema name (e.g., "dbo" from "dbo.usp_procedure")
-    schema_name = "dbo"
-    if "." in procedure:
-        schema_name = procedure.split(".")[0]
-
     # Collect the final response
     final_response = ""
 
-    # Run the agent to generate implementation plan
-    print("Generating implementation plan...")
+    # Get dependencies
+    dependencies = get_dependencies(procedure, project_path)
+
+    # Run the agent to generate FAQ
+    print("Generating FAQ...")
     try:
         for event in runner.run(
             user_id=USER_ID,
             session_id=SESSION_ID,
             new_message=get_prompt(
-                schema_name, procedure, procedure_definition, project_path
+                procedure, procedure_definition, dependencies, project_path
             ),
         ):
             if event.is_final_response():
@@ -189,61 +177,11 @@ def implementation_planner(procedure, project_path):
         return False
 
 
-def run_implementation_planner(project_path):
+def run_faq_builder(procedure_name, project_path):
     """CLI menu function to select and analyze procedures"""
-    print("=== Stored Procedure Implementation Planner ===")
+    print("=== Stored Procedure FAQ Builder ===")
 
     # Get all procedures
     procedures = get_procedures(project_path)
 
-    if not procedures:
-        print(f"No procedures found in {os.path.join(project_path, 'sql_raw')}")
-        return
-
-    # Display menu
-    print("\nAvailable procedures:")
-    for i, proc in enumerate(procedures):
-        print(f"{i+1}. {proc}")
-    print(f"{len(procedures)+1}. Plan all procedures")
-    print(f"{len(procedures)+2}. Return to main menu")
-
-    # Get user selection
-    try:
-        choice = int(input("\nSelect a procedure to plan (enter number): "))
-
-        if 1 <= choice <= len(procedures):
-            # Plan single procedure
-            procedure = procedures[choice - 1]
-            implementation_planner(procedure, project_path)
-            return
-
-        elif choice == len(procedures) + 1:
-            # Plan all procedures
-            completed = 0
-            total = len(procedures)
-
-            for procedure in procedures:
-                print(f"\nProcessing {procedure} ({completed+1}/{total})...")
-                implementation_planner(procedure, project_path)
-                completed += 1
-
-            print(
-                f"\nImplementation planning completed for all {completed} procedures."
-            )
-            return
-
-        elif choice == len(procedures) + 2:
-            print("Returning to main menu...")
-            return
-
-        else:
-            print("Invalid choice. Please try again.")
-            return
-
-    except ValueError:
-        print("Please enter a valid number.")
-        return
-
-    except KeyboardInterrupt:
-        print("\nOperation cancelled by user.")
-        return
+    faq_builder(procedure_name, project_path)

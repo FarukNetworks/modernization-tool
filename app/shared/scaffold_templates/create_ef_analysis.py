@@ -92,7 +92,7 @@ class EntityFrameworkAnalyzer:
     def analyze(self):
         """Run the entity framework analysis"""
         # Check if analysis file already exists
-        output_file = self.output_dir / f"{self.procedure_name}_ef_analysis.json"
+        output_file = self.output_dir / f"ef_analysis.json"
         if output_file.exists():
             print(
                 f"Analysis file already exists for {self.procedure_name}, skipping..."
@@ -404,7 +404,7 @@ class EntityFrameworkAnalyzer:
 
     def save_report(self):
         """Save the collected data as a JSON report"""
-        output_file = self.output_dir / f"{self.procedure_name}_ef_analysis.json"
+        output_file = self.output_dir / f"ef_analysis.json"
 
         with open(output_file, "w") as f:
             json.dump(self.collected_data, f, indent=2)
@@ -428,7 +428,7 @@ def analyze_csharp_dependencies(procedure_name, project_path):
             project_path,
             "analysis",
             procedure_name,
-            f"{procedure_name}_ef_analysis.json",
+            f"ef_analysis.json",
         )
         print(f"Analysis file saved to: {ef_analysis_path}")
         return True

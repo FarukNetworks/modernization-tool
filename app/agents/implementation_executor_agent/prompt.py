@@ -39,21 +39,21 @@ def get_prompt(procedure_name, procedure_definition, project_path):
         project_path,
         "analysis",
         procedure_name,
-        f"{procedure_name}_business_rules.json",
+        f"business_rules.json",
     )
 
     business_functions_json = os.path.join(
         project_path,
         "analysis",
         procedure_name,
-        f"{procedure_name}_business_functions.json",
+        f"business_functions.json",
     )
 
     business_processes_json = os.path.join(
         project_path,
         "analysis",
         procedure_name,
-        f"{procedure_name}_business_processes.json",
+        f"business_processes.json",
     )
 
     # Get implementation plan
@@ -61,7 +61,7 @@ def get_prompt(procedure_name, procedure_definition, project_path):
         project_path,
         "analysis",
         procedure_name,
-        f"{procedure_name}_implementation_plan.json",
+        f"implementation_plan.json",
     )
     implementation_plan = {}
     if os.path.exists(implementation_plan_path):
@@ -118,6 +118,7 @@ Your code should follow best practices:
 - Unit test coverage
 
 Please provide the complete implementation code for all required files.
+Each new file should be created in the folder with the procedure name - {procedure_name}
 """
 
     task = types.Content(

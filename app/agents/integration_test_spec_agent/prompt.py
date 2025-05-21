@@ -51,42 +51,42 @@ IMPORTANT: Never include the following columns in your test data setup:
 
     # business_rules
     with open(
-        f"{project_path}/analysis/{procedure_name}/{procedure_name}_business_rules.json",
+        f"{project_path}/analysis/{procedure_name}/business_rules.json",
         "r",
     ) as f:
         business_rules_json = json.load(f)
 
     # business_functions
     with open(
-        f"{project_path}/analysis/{procedure_name}/{procedure_name}_business_functions.json",
+        f"{project_path}/analysis/{procedure_name}/business_functions.json",
         "r",
     ) as f:
         business_functions_json = json.load(f)
 
     # business_processes
     with open(
-        f"{project_path}/analysis/{procedure_name}/{procedure_name}_business_processes.json",
+        f"{project_path}/analysis/{procedure_name}/business_processes.json",
         "r",
     ) as f:
         business_processes_json = json.load(f)
 
     # returnable_objects
     with open(
-        f"{project_path}/analysis/{procedure_name}/{procedure_name}_returnable_objects.json",
+        f"{project_path}/analysis/{procedure_name}/returnable_objects.json",
         "r",
     ) as f:
         returnable_objects_json = json.load(f)
 
     # process_object_mapping
     with open(
-        f"{project_path}/analysis/{procedure_name}/{procedure_name}_process_object_mapping.json",
+        f"{project_path}/analysis/{procedure_name}/process_object_mapping.json",
         "r",
     ) as f:
         process_object_mapping_json = json.load(f)
 
     # Get ef_analysis JSON file from analysis directory
     with open(
-        f"{project_path}/analysis/{procedure_name}/{procedure_name}_ef_analysis.json",
+        f"{project_path}/analysis/{procedure_name}/ef_analysis.json",
         "r",
     ) as f:
         ef_analysis = json.load(f)
