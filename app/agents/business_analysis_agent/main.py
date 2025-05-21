@@ -141,7 +141,14 @@ def analyze_procedure_business_logic(procedure, project_path):
 
 
 def analyze_procedure_returnable_objects(
-    procedure, session_service, app_name, user_id, session_id, project_path
+    procedure,
+    procedure_definition,
+    dependencies,
+    session_service,
+    app_name,
+    user_id,
+    session_id,
+    project_path,
 ):
     """Analyze a procedure to generate returnable objects files"""
     print(f"\nAnalyzing returnable objects for procedure: {procedure}")
@@ -150,7 +157,9 @@ def analyze_procedure_returnable_objects(
     analysis_dir = create_analysis_directory(procedure, project_path)
 
     # Create prompt for returnable objects analysis
-    prompt_text = get_returnable_objects_prompt(procedure, project_path)
+    prompt_text = get_returnable_objects_prompt(
+        procedure, project_path, procedure_definition, str(dependencies)
+    )
 
     if prompt_text is None:
         print(
@@ -210,10 +219,31 @@ def business_analysis(procedure, project_path):
         print(f"Business logic analysis failed for {procedure}")
         return False
 
+    # Get procedure definition
+    sql_file_path = os.path.join(project_path, "sql_raw", procedure, f"{procedure}.sql")
+    with open(sql_file_path, "r") as f:
+        procedure_definition = f.read()
+
+    # Get connection string from project path if available
+    connection_string = None
+    conn_file_path = os.path.join(project_path, "connection_string.json")
+    if os.path.exists(conn_file_path):
+        try:
+            with open(conn_file_path, "r") as f:
+                conn_data = json.load(f)
+                connection_string = conn_data.get("connection_string")
+        except (json.JSONDecodeError, FileNotFoundError):
+            print("Warning: Could not load connection string from project file.")
+
+    # Get procedure dependencies
+    dependencies = get_dependencies(procedure, project_path, connection_string)
+
     # Then immediately run returnable objects analysis
     session_service, app_name, user_id, session_id = session_info
     success = analyze_procedure_returnable_objects(
         procedure,
+        procedure_definition,
+        dependencies,
         session_service,
         app_name,
         user_id,

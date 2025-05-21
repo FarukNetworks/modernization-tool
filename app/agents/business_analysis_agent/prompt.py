@@ -41,75 +41,123 @@ business_rules_json = """
 """
 
 business_functions_json = """
-  ```json
-   {
-     "businessFunctions": [
-       {
-         "id": "BF-001",
-         "name": "Function Name",
-         "description": "Detailed description of the function",
-         "rules": ["BR-001", "BR-002"],
-         "dataRequirements": {
-           "inputs": ["Input1", "Input2"],
-           "outputs": ["Output1", "Output2"],
-           "dependencies": ["Dependency1"]
-         },
-         "technicalContext": {
-           "dataTransformation": "Notes about data transformation",
-           "dynamicStructure": "Notes about dynamic structures",
-           "performanceConsiderations": "Notes about performance",
-           "dataFlow": "Notes about data flow" 
-         },
-         "testableIntent": true
-       }
-     ]
-   }
+```json
+{
+  "businessFunctions": [
+    {
+      "id": "BF-001",
+      "name": "Function Name",
+      "type": "process",
+      "description": "Detailed description of the function",
+      "businessPurpose": "Explanation of why this function exists from a business perspective",
+      "businessContext": "Broader business context and terminology",
+      "testableUnits": ["TU-001", "TU-002"],
+      "dataRequirements": {
+        "inputs": ["Input1", "Input2"],
+        "outputs": ["Output1", "Output2"],
+        "dependencies": ["Dependency1"]
+      },
+      "technicalContext": {
+        "dataTransformation": "Notes about data transformation",
+        "dynamicStructure": "Notes about dynamic structures",
+        "dataFlow": "Notes about data flow",
+      },
+      "reusability": {
+        "usedInProcesses": ["PROC-001"],
+        "usedInSteps": ["STEP-001", "STEP-003"]
+      }
+    },
+    {
+      "id": "BF-002",
+      "name": "Parameter Name",
+      "type": "configuration",
+      "description": "Detailed description of the configuration parameter",
+      "businessPurpose": "Explanation of why this parameter exists and its business meaning",
+      "businessContext": "Broader business context for this configuration",
+      "parameterDetails": {
+        "name": "@ParameterName",
+        "value": "90",
+        "unit": "days",
+        "shouldExternalize": true,
+        "changeImpact": "Description of how changing this value affects business outcomes"
+      },
+      "testableUnits": ["TU-003"],
+      "dataRequirements": {
+        "inputs": [],
+        "outputs": ["Output1"],
+        "dependencies": []
+      },
+      "technicalContext": {
+        "dataTransformation": "How this parameter affects transformations",
+        "dynamicStructure": "Whether it affects dynamic behavior",
+        "dataFlow": "How this parameter flows through the code"
+      },
+      "reusability": {
+        "usedInProcesses": ["PROC-001"],
+        "usedInSteps": ["STEP-002"]
+      }
+    }
+  ]
+}
 ```
 """
 
 business_processes_json = """
-  ```json
+```json
+{
+  "businessProcesses": [
     {
-     "businessProcesses": [
-       {
-         "id": "PROC-001",
-         "name": "Process Name",
-         "description": "Detailed description of the process",
-         "orchestration": {
-           "steps": [
-             {
-               "id": "STEP-001",
-               "sequence": 1,
-               "functionId": "BF-001",
-               "type": "type of step",
-               "description": "Description of this step",
-               "inputs": ["Input1"],
-               "outputs": ["Output1"],
-               "businessRules": ["BR-001"],
-               "technicalContext": {
-                 "implementation": "Notes about technical implementation",
-                 "dependencies": "Notes about technical dependencies",
-                 "dataFlow": "Notes about data flow"
-               },
-               "testableIntent": true,
-               "controlFlow": {
-                 "type": "standard|conditional|loop",
-                 "nextStep": "STEP-002"
-               }
-             }
-           ],
-           "technicalDependencies": [
-             {
-               "description": "Description of dependency",
-               "detail": "Detailed explanation",
-               "impact": "Impact on implementation",
-               "testableIntent": false
-             }
-           ]
-         }
-       }
-     ]
-   }
+      "id": "PROC-001",
+      "name": "Process Name",
+      "description": "Description of what the stored procedure does",
+      "orchestration": {
+        "steps": [
+          {
+            "id": "STEP-001",
+            "sequence": 1,
+            "name": "Step Name",
+            "type": "process|decision|data-retrieval|validation|calculation|terminal",
+            "description": "Description of this step",
+            "businessFunctionRef": "BF-001",
+            "implementation": "Notes about technical implementation",
+            "inputs": ["Input1"],
+            "outputs": ["Output1"],
+            "controlFlow": {
+              "type": "standard|decision|terminal|merge",
+              // For standard type:
+              "nextStep": "STEP-002",
+              
+              // For decision type:
+              "conditions": [
+                {
+                  "condition": "Condition description",
+                  "outcome": "success|error|continue",
+                  "nextStep": "STEP-003",
+                  "terminatesExecution": false
+                },
+                {
+                  "condition": "Alternative condition description",
+                  "outcome": "error",
+                  "nextStep": null,
+                  "terminatesExecution": true,
+                  "returnsDescription": "Description of error or result returned"
+                }
+              ],
+              
+              // For terminal type:
+              "terminatesExecution": true,
+              "returnsDescription": "Description of final result",
+              
+              // For merge type:
+              "mergeFrom": ["STEP-003", "STEP-004"],
+              "nextStep": "STEP-005"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
 ```
 """
 
@@ -131,12 +179,12 @@ returnable_objects_json = """
       "returnConditions": [
         {
           "processStepId": "STEP-002",
+          "businessFunctionId": "BF-003",
           "condition": "Condition under which this is returned",
           "description": "Description of when/why returned"
         }
       ],
       "technicalNotes": "Technical notes about this returnable",
-      "testableIntent": true
     }
   ],
   "returnScenarios": [
@@ -151,7 +199,6 @@ returnable_objects_json = """
           "isRequired": true
         }
       ],
-      "businessRulesInvolved": ["BR-001"],
       "triggerCondition": "Condition that triggers this scenario"
     }
   ],
@@ -164,11 +211,11 @@ returnable_objects_json = """
         "description": "Description of side effect",
         "affectedEntities": ["Entity1"],
         "producedInScenarios": ["RS-001"],
+        "producedByFunctions": ["BF-002"],
         "dataWritten": {
           "Field1": "Description of data written",
           "Field2": "Description of data written"
         },
-        "businessRules": ["BR-001"]
       }
     ]
   }
@@ -195,6 +242,7 @@ process_object_mapping_json = """
               {
                 "objectId": "RO-001",
                 "generatedInStep": "STEP-002",
+                "generatedByFunction": "BF-003",
                 "description": "Description of object in this context",
                 "notes": "Additional notes"
               }
@@ -208,6 +256,7 @@ process_object_mapping_json = """
         "decisionId": "DP-001",
         "description": "Description of decision point",
         "decisionVariable": "Variable name",
+        "implementedByFunction": "BF-004",
         "outcomes": [
           {
             "value": "Value for this outcome",
@@ -230,7 +279,8 @@ process_object_mapping_json = """
             {
               "effect": "Description of database effect",
               "details": "Additional details",
-              "relatedSideEffect": "SE-001"
+              "relatedSideEffect": "SE-001",
+              "implementedByFunction": "BF-005"
             }
           ],
           "flowPath": "PATH-001"
@@ -242,80 +292,67 @@ process_object_mapping_json = """
 ```
 """
 
+testable_units_json = """
+```json
+{
+  "testableUnits": [
+    {
+      "id": "TU-001",
+      "name": "Unit Name",
+      "parentFunctionId": "BF-001",
+      "category": "validation|calculation|data transformation|etc",
+      "coverage": {
+        "codeLines": [10, 11]
+      }
+    }
+  ]
+}
+```
+"""
+
 
 def get_prompt(procedure_name, procedure_definition, dependencies):
 
     prompt = f"""
-<behavior_rules>
-You have one mission: execute exactly what is requested. 
-Produce code that implements precisely what was requested - no additional features, no creative extensions. 
-Follow instructions to the letter. Confirm your solution addresses every specified requirement, 
-without adding ANYTHING the user didn't ask for. 
-Do not assume anything about the analysis of the code and instead think through the code step by step.
-</behavior_rules>
-
 ## Objective
-Analyze the provided SQL stored procedure and decompose it into structured business components, rules, processes, and technical patterns to prepare for a modern implementation. The output should be detailed JSON files that document both the business logic and critical technical implementation patterns.
+Analyze the provided SQL stored procedure using both the SQL code and static analysis data to decompose it into two main structures:
+1. Execution Flow: Steps, processes, and control flow
+2. Business Logic: Functions and testable units
+
 
 ## Your Task
-1. Thoroughly analyze the SQL stored procedure and any supporting files
-2. Extract and document all business rules and technical patterns
-3. Identify key business functions and their implementation requirements
-4. Map the overall process flow, including branching and looping logic
-5. Distinguish between testable business intent and implementation-specific details
-6. Document all returnable objects and the conditions under which they are returned
+1. For all other components (business functions, processes, objects, mappings): Create fully populated detailed structures
+2. Ensure every aspect of the SQL code is covered by at least one testable unit
+3. Use your own analysis and judgment to identify the structure, using static analysis data as a reference but not as the sole determinant
+
+## Conceptual Framework
+Consider the SQL procedure as containing two interrelated tracks:
+
+1. Execution Flow Track:
+   - Business processes represent end-to-end workflows
+   - Steps define the sequence of actions within a process
+   - Each step references a business function that implements its logic
+
+2. Business Logic Track:
+   - Business functions represent logical capabilities that can be reused
+   - Functions contain the actual implementation details
 
 ## Provided Files
-1. The original SQL stored procedure [{procedure_definition}]
-2. The dependencies of the procedure [{dependencies}]
-
-### Important Detailing Requirements
-- If the stored procedure uses or implies a PIVOT or other data transformations, list any **pivot columns** (or analogous transformations) in the final JSON where applicable (business rules or processes).
-- If the procedure handles errors (e.g., using `@@ERROR`, RAISERROR, try/catch), identify **how errors are captured** and **how log messages** (or error messages) are constructed.
-- Note **parameter usage**: which parameters the procedure expects, how they affect the logic or the final output, and how they might appear in log messages (e.g., start date, load identifier, etc.).
-- Highlight any **branching** or **conditional checks** (IF/ELSE) and how they relate to the business process (e.g., if a package is disabled, if a certain column is zero, etc.).
-- Provide a short explanation or reasoning for each extracted rule or function, plus any confidence scores where you feel uncertain.
+1. The original SQL stored procedure code
+[{procedure_definition}]
+2. The stored procedure dependencies
+[{dependencies}]
 
 
-## Analysis Guidelines
-1. Focus primarily on the business intent rather than technical implementation
-2. Identify implicit business rules that may not be explicitly documented
-3. Note any areas where business logic seems unclear and would benefit from further clarification
-4. Document any apparent data quality assumptions or edge case handling
-5. Include confidence scores for your analysis when uncertainty exists
-6. Use clear, consistent naming conventions throughout your analysis
-7. Distinguish between testable business rules and implementation-specific technical patterns
-8. Document critical technical patterns that are essential to understanding the procedure's operation
-9. Identify where dynamic SQL generation or pivoting operations occur and explain their business purpose
+## Control Flow Types:
+- "decision": Use for IF/ELSE blocks, CASE statements, or loop constructs
+- "standard": Use for sequential statements without branching or looping
+- "terminal": Use for final steps that return data or end execution
+- "merge": Use when multiple flow paths converge
 
-## Technical Context Documentation
-When documenting technical context, ensure you capture:
-
-1. **Data Transformation Patterns**: How data is manipulated, especially for pivoting row data to columns
-2. **Dynamic Structure Creation**: How variable-sized data sets are handled
-3. **Conditional Processing**: How the procedure branches based on data conditions
-4. **Data Flow**: How data moves between different processing steps
-5. **Performance Considerations**: Areas where performance optimization is important
-6. **Test Intent**: Whether each element represents testable business behavior or implementation detail
-
-## Returnable Objects Documentation
-When documenting returnable objects, ensure you capture:
-
-1. **Result Sets**: All data sets returned by the procedure and their structures
-2. **Return Conditions**: The exact conditions under which each object is returned
-3. **Implicit Returns**: Any implicit return values generated by the procedure
-4. **Side Effects**: Database modifications or other side effects that occur during execution
-5. **Process Mapping**: Clear mapping between execution paths and returnable objects
-6. **Execution Outcomes**: Complete analysis of all possible execution outcomes and what is returned in each case
-
-## Distinguishing Testable Intent
-Mark each business rule, function, and process step with a "testableIntent" flag:
-- Set to "true" for elements that represent business behavior that should be explicitly tested
-- Set to "false" for elements that are primarily implementation details
-
-For example, a business rule about data validation is testable business intent, while a rule about temporary table creation is an implementation detail.
-
-You must capture all business rules, functions, and processes that are relevant to the procedure. 
+Ensure that every aspect of the SQL code is covered by at least one testable unit, with no gaps in coverage.
+Take the time to review the outputs and make sure they truly reflect the content of the stored procedure.
+```
 """
 
     task = types.Content(
@@ -324,12 +361,6 @@ You must capture all business rules, functions, and processes that are relevant 
             types.Part(
                 text=f"""
 {prompt}
-
-## Deliverables
-Produce exactly 3 JSON files:
-1. {procedure_name}_business_rules.json
-2. {procedure_name}_business_functions.json
-3. {procedure_name}_business_processes.json
 
 ALWAYS RESPOND WITH: 
 FILE: <file_name>
@@ -360,7 +391,9 @@ FILE: {procedure_name}_business_processes.json
     return task
 
 
-def get_returnable_objects_prompt(procedure_name, project_path):
+def get_returnable_objects_prompt(
+    procedure_name, project_path, procedure_definition, dependencies
+):
     """Generate the prompt for returnable objects analysis with robust error handling"""
     try:
         import glob
@@ -419,7 +452,66 @@ def get_returnable_objects_prompt(procedure_name, project_path):
             business_processes = json.load(f)
 
         prompt = f"""
-Analyze the provided business analysis files and generate returnable objects and process-object mapping files.
+## Objective
+Analyze the provided SQL stored procedure using both the SQL code and static analysis data to decompose it into two main structures:
+1. Execution Flow: Steps, processes, and control flow
+2. Business Logic: Functions and testable units
+
+
+## Your Task
+1. Thoroughly analyze the SQL stored procedure and reference the static analysis data as a helpful guide
+2. For testable units: Create simplified skeletal structures focusing on identification and categorization
+3. For all other components (business functions, processes, objects, mappings): Create fully populated detailed structures
+4. Ensure every aspect of the SQL code is covered by at least one testable unit
+5. Use your own analysis and judgment to identify the structure, using static analysis data as a reference but not as the sole determinant
+
+## Conceptual Framework
+Consider the SQL procedure as containing two interrelated tracks:
+
+1. Execution Flow Track:
+   - Business processes represent end-to-end workflows
+   - Steps define the sequence of actions within a process
+   - Each step references a business function that implements its logic
+
+2. Business Logic Track:
+   - Business functions represent logical capabilities that can be reused
+   - Testable units are atomic, verifiable units of business logic within functions
+   - Functions contain the actual implementation details
+
+Object mappings create connections between both tracks by linking steps, functions, and data objects.
+
+## Static Analysis as Reference Only
+The static analysis data (analysis.json) is provided as a helpful reference, but you should make your own determinations about:
+- What constitutes a testable unit
+- How business functions should be organized
+- What processes are present in the code
+- What objects are returned and under what conditions
+
+Use the static analysis to inform your work, but critically evaluate its suggestions and make independent judgments about the code's structure and meaning.
+
+## Focus for Testable Units
+For testable units, focus on:
+1. IDENTIFICATION: Unique ID and descriptive name
+2. CATEGORIZATION: Functional category
+3. PARENT RELATIONSHIP: Link to parent business function
+4. CODE BOUNDARIES: Line numbers where the unit begins and ends
+
+
+## Provided Files
+1. The original SQL stored procedure code
+[{procedure_definition}]
+2. The stored procedure dependencies
+[{dependencies}]
+
+
+## Control Flow Types:
+- "decision": Use for IF/ELSE blocks, CASE statements, or loop constructs
+- "standard": Use for sequential statements without branching or looping
+- "terminal": Use for final steps that return data or end execution
+- "merge": Use when multiple flow paths converge
+
+Ensure that every aspect of the SQL code is covered by at least one testable unit, with no gaps in coverage.
+Take the time to review the outputs and make sure they truly reflect the content of the stored procedure.
 
 ## Business Analysis Files:
 1. {business_rules}
@@ -430,6 +522,7 @@ Analyze the provided business analysis files and generate returnable objects and
 Produce exactly 2 JSON files:
 1. {procedure_name}_returnable_objects.json  
 2. {procedure_name}_process_object_mapping.json
+3. {procedure_name}_testable_units.json
 
 ALWAYS RESPOND WITH: 
 FILE: <file_name>
@@ -444,6 +537,9 @@ FILE: {procedure_name}_returnable_objects.json
 
 FILE: {procedure_name}_process_object_mapping.json
 {process_object_mapping_json}
+
+FILE: {procedure_name}_testable_units.json
+{testable_units_json}
 """
 
         return prompt
