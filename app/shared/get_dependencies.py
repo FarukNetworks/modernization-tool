@@ -317,7 +317,7 @@ def analyze_procedure(procedure_name, project_path=None, connection_string=None)
 
         # Save the dependency tree to a JSON file
         with open(
-            os.path.join(analysis_dir, f"{procedure_name}_dependency_tree.json"),
+            os.path.join(analysis_dir, f"dependency_tree.json"),
             "w",
         ) as f:
             json.dump(dependencies, f, indent=2)

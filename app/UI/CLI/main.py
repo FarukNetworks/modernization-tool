@@ -23,7 +23,12 @@ from app.shared.scaffold_templates.create_ef_analysis import (
     analyze_csharp_dependencies,
     run_csharp_dependency_analysis,
 )
-
+from app.shared.python_scripts.generate_bf_markdown import (
+    run_generate_bf_markdown,
+)
+from app.shared.python_scripts.generate_report import (
+    run_generate_report,
+)
 from app.agents.business_analysis_agent.main import (
     run_business_analysis,
     business_analysis,
@@ -200,6 +205,8 @@ def prompt_for_next_action(project_path, connection_string, project_name):
                 "FAQ Builder",
                 "Testable Unit Scenarios",
                 "Csharp Dependency Analysis",
+                "Generate Business Functions Markdown",
+                "Generate Analysis Report",
                 "Implementation Planner",
                 "Implementation Executor",
                 "MCP Implementation Executor",
@@ -366,7 +373,77 @@ def prompt_for_next_action(project_path, connection_string, project_name):
         else:
             print("No procedures found. Please run 'Prepare Stored Procedures' first.")
 
+    elif selected == "Generate Business Functions Markdown":
+        # Get list of procedures for C# dependency analysis
+        procedures = [
+            folder
+            for folder in os.listdir(os.path.join(project_path, "sql_raw"))
+            if os.path.isdir(os.path.join(project_path, "sql_raw", folder))
+        ]
+
+        # Ask if user wants to run full menu or analyze a specific procedure
+        if procedures:
+            choices = ["Show full menu"] + procedures + ["Return to main menu"]
+            questions = [
+                inquirer.List(
+                    "generate_bf_markdown_choice",
+                    message="Which procedure would you like to generate business functions markdown for?",
+                    choices=choices,
+                ),
+            ]
+            generate_bf_markdown_answer = inquirer.prompt(questions)
+            selected_generate_bf_markdown = generate_bf_markdown_answer[
+                "generate_bf_markdown_choice"
+            ]
+
+            if selected_generate_bf_markdown == "Show full menu":
+                # Run BF markdown generation using the full menu
+                run_generate_bf_markdown("all", project_path)
+            elif selected_generate_bf_markdown == "Return to main menu":
+                pass
+            else:
+                # Generate BF markdown for the selected procedure directly
+                run_generate_bf_markdown(selected_generate_bf_markdown, project_path)
+        else:
+            print("No procedures found. Please run 'Prepare Stored Procedures' first.")
+
         # After analysis, ask again what to do next
+        prompt_for_next_action(project_path, connection_string, project_name)
+    elif selected == "Generate Analysis Report":
+        # Get list of procedures to generate reports for
+        procedures = [
+            folder
+            for folder in os.listdir(os.path.join(project_path, "sql_raw"))
+            if os.path.isdir(os.path.join(project_path, "sql_raw", folder))
+        ]
+
+        # Ask which procedure to generate a report for
+        if procedures:
+            choices = procedures + ["Return to main menu"]
+            questions = [
+                inquirer.List(
+                    "report_choice",
+                    message="Which procedure would you like to generate an analysis report for?",
+                    choices=choices,
+                ),
+            ]
+            report_answer = inquirer.prompt(questions)
+            selected_procedure = report_answer["report_choice"]
+
+            if selected_procedure == "Return to main menu":
+                pass
+            else:
+                # Generate report for the selected procedure
+                print(f"Generating analysis report for {selected_procedure}...")
+                report_path = run_generate_report(selected_procedure, project_path)
+                if report_path:
+                    print(f"Report generated successfully at {report_path}")
+                else:
+                    print("Failed to generate report. Check the logs for details.")
+        else:
+            print("No procedures found. Please run 'Prepare Stored Procedures' first.")
+
+        # After report generation, ask again what to do next
         prompt_for_next_action(project_path, connection_string, project_name)
     elif selected == "Implementation Planner":
         # Get list of procedures to plan implementation for

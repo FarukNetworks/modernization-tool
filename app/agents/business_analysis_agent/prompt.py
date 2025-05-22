@@ -48,6 +48,7 @@ business_functions_json = """
       "id": "BF-001",
       "name": "Function Name",
       "type": "process",
+      "sqlSnippet": "Relevant SQL code implementing this rule",
       "description": "Detailed description of the function",
       "businessPurpose": "Explanation of why this function exists from a business perspective",
       "businessContext": "Broader business context and terminology",

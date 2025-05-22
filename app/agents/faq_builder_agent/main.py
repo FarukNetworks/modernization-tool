@@ -79,7 +79,6 @@ def check_required_files(procedure, project_path):
         "business_processes.json",
         "returnable_objects.json",
         "process_object_mapping.json",
-        "ef_analysis.json",
     ]
 
     for pattern in required_files:

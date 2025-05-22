@@ -28,13 +28,6 @@ def get_procedures(project_path):
     return procedures
 
 
-def create_analysis_directory(procedure, project_path):
-    """Create analysis directory for the selected procedure"""
-    analysis_dir = os.path.join(project_path, "analysis", procedure)
-    os.makedirs(analysis_dir, exist_ok=True)
-    return analysis_dir
-
-
 def save_json_file(file_path, content):
     """Save the file content to the specified path"""
     # Create the full directory path
@@ -43,26 +36,6 @@ def save_json_file(file_path, content):
     # Save the file content
     with open(file_path, "w") as f:
         f.write(content)
-
-
-def extract_files_from_response(result, analysis_dir):
-    """Extract JSON files from the model response and save them"""
-    file_paths = []
-
-    # Extract file paths and contents
-    for match in re.finditer(r"FILE: (.*?)\n```json\n(.*?)```", result, re.DOTALL):
-        file_path = match.group(1).strip()
-        file_content = match.group(2).strip()
-
-        # Get just the filename without any path
-        filename = os.path.basename(file_path)
-
-        # Save the file content
-        full_path = os.path.join(analysis_dir, filename)
-        save_json_file(full_path, file_content)
-        file_paths.append(filename)
-
-    return file_paths
 
 
 def check_required_files(procedure, project_path):
@@ -94,6 +67,7 @@ def check_required_files(procedure, project_path):
 def testable_unit_scenarios(procedure, project_path):
     """Main entry point - plan testable unit scenarios for a procedure based on its analysis"""
     print(f"\nStarting testable unit scenarios for {procedure}")
+    import re
 
     # Check if all required files exist
     if not check_required_files(procedure, project_path):
@@ -111,81 +85,134 @@ def testable_unit_scenarios(procedure, project_path):
         print(f"Error: SQL file not found at {sql_file_path}")
         return False
 
-    # Create a new session
-    session_service = InMemorySessionService()
-
-    APP_NAME = "Testable Unit Scenarios Builder"
-    USER_ID = "project_owner"
-    SESSION_ID = str(uuid.uuid4())
-    session = session_service.create_session(
-        app_name=APP_NAME, user_id=USER_ID, session_id=SESSION_ID
-    )
-
-    print("Created new session")
-    print(f"\tSession ID: {SESSION_ID}")
-
-    # Create analysis directory
-    analysis_dir = create_analysis_directory(procedure, project_path)
-
-    # Create and run the agent
-    runner = Runner(
-        agent=root_agent,
-        app_name=APP_NAME,
-        session_service=session_service,
-    )
-
-    # Collect the final response
-    final_response = ""
-
     # Get dependencies
     dependencies = get_dependencies(procedure, project_path)
 
     # Get testable units
-    with open(
-        f"{project_path}/analysis/{procedure}/testable_units.json",
-        "r",
-    ) as f:
-        testable_units = json.load(f)
-
-    # Run the agent to generate testable unit scenarios
-    print("Generating testable unit scenarios...")
+    testable_units_path = os.path.join(
+        project_path, "analysis", procedure, "testable_units.json"
+    )
     try:
-        for event in runner.run(
-            user_id=USER_ID,
-            session_id=SESSION_ID,
-            new_message=get_prompt(
-                procedure,
-                procedure_definition,
-                dependencies,
-                project_path,
-                testable_unit,
-            ),
-        ):
-            if event.is_final_response():
-                if event.content and event.content.parts:
-                    final_response = event.content.parts[0].text
-                    print(f"Received response from the agent")
-
-                    # Debug: Check if the response contains the expected file pattern
-                    if "FILE:" in final_response and "```json" in final_response:
-                        print("Response contains file markers")
-                    else:
-                        print(
-                            "WARNING: Response does not contain expected file markers"
-                        )
-                        print("First 150 chars of response:", final_response[:150])
-
-        # Extract and save files
-        saved_files = extract_files_from_response(final_response, analysis_dir)
-        print(f"Created {len(saved_files)} implementation plan files in {analysis_dir}")
-        return True
-
-    except Exception as e:
-        print(f"Error during implementation planning: {str(e)}")
-        import traceback
-
-        traceback.print_exc()
+        with open(testable_units_path, "r") as f:
+            testable_units_data = json.load(f)
+            testable_units = testable_units_data.get("testableUnits", [])
+    except FileNotFoundError:
+        print(f"Error: Testable units file not found at {testable_units_path}")
         return False
+
+    # Variable to store all scenarios for all units
+    all_scenarios = {"testableUnitScenarios": []}
+
+    # Process each testable unit
+    for unit_index, testable_unit in enumerate(testable_units):
+        print(
+            f"Processing testable unit {unit_index + 1}/{len(testable_units)}: {testable_unit['name']}"
+        )
+
+        # Create a new session for each unit
+        session_service = InMemorySessionService()
+        APP_NAME = "Testable Unit Scenarios Builder"
+        USER_ID = "project_owner"
+        SESSION_ID = str(uuid.uuid4())
+        session = session_service.create_session(
+            app_name=APP_NAME, user_id=USER_ID, session_id=SESSION_ID
+        )
+
+        # Create and run the agent
+        runner = Runner(
+            agent=root_agent,
+            app_name=APP_NAME,
+            session_service=session_service,
+        )
+
+        # Run the agent to generate testable unit scenarios for this unit
+        try:
+            final_response = ""
+            for event in runner.run(
+                user_id=USER_ID,
+                session_id=SESSION_ID,
+                new_message=get_prompt(
+                    procedure,
+                    procedure_definition,
+                    dependencies,
+                    project_path,
+                    testable_unit,
+                ),
+            ):
+                if event.is_final_response():
+                    if event.content and event.content.parts:
+                        final_response = event.content.parts[0].text
+                        print(
+                            f"Received response from the agent for unit: {testable_unit['id']}"
+                        )
+
+            # Step 1: Try to parse the entire response as JSON
+            try:
+                parsed_json = json.loads(final_response)
+                # Add the unit ID to the scenario
+                all_scenarios["testableUnitScenarios"].append(parsed_json)
+
+            # Step 2: If that fails, try to find JSON code blocks
+            except json.JSONDecodeError:
+                print("Response is not valid JSON, looking for code blocks...")
+                json_blocks_found = False
+
+                # Look for code blocks
+                for match in re.finditer(
+                    r"```(?:json)?\n(.*?)\n```", final_response, re.DOTALL
+                ):
+                    json_content = match.group(1).strip()
+                    try:
+                        parsed_json = json.loads(json_content)
+                        # Add the unit ID to the scenario
+                        scenario = {
+                            "id": f"SCENARIO-{testable_unit['id']}-block",
+                            "testableUnitId": testable_unit["id"],
+                            "unitName": testable_unit["name"],
+                            "name": testable_unit["name"],
+                            "description": parsed_json.get("description", ""),
+                            "data": parsed_json,
+                        }
+                        all_scenarios["testableUnitScenarios"].append(scenario)
+                        json_blocks_found = True
+                        break
+                    except json.JSONDecodeError:
+                        continue
+
+                # Step 3: If no JSON found, add a placeholder
+                if not json_blocks_found:
+                    scenario = {
+                        "id": f"PLACEHOLDER-{testable_unit['id']}",
+                        "testableUnitId": testable_unit["id"],
+                        "unitName": testable_unit["name"],
+                        "name": testable_unit["name"],
+                        "description": "Could not parse response as JSON",
+                    }
+                    all_scenarios["testableUnitScenarios"].append(scenario)
+
+        except Exception as e:
+            print(f"Error processing unit {testable_unit['id']}: {str(e)}")
+            # Add error scenario
+            error_scenario = {
+                "id": f"ERROR-{testable_unit['id']}",
+                "testableUnitId": testable_unit["id"],
+                "unitName": testable_unit["name"],
+                "name": f"Error processing {testable_unit['name']}",
+                "description": f"Error: {str(e)}",
+            }
+            all_scenarios["testableUnitScenarios"].append(error_scenario)
+
+    # Save all scenarios to file
+    scenarios_file_path = os.path.join(
+        project_path, "analysis", procedure, "testable_unit_scenarios.json"
+    )
+    with open(scenarios_file_path, "w") as f:
+        json.dump(all_scenarios, f, indent=2)
+
+    print(
+        f"Created testable unit scenarios file with {len(all_scenarios['testableUnitScenarios'])} scenarios at {scenarios_file_path}"
+    )
+    return True
 
 
 def run_testable_unit_scenarios(procedure_name, project_path):
